@@ -29,6 +29,12 @@ void initialize(Stack *stack, unsigned int max_size){
 		stack->data = NULL;
 }
 
+// Free a stack.
+void destroy(Stack *stack){
+	free(stack->data);
+	stack->capacity = stack->size = 0;
+}
+
 // Append an element.
 void push(Stack *stack, const Vector3 *elem){
 	if(stack->size == stack->capacity)
@@ -61,15 +67,20 @@ int main(void){
 	Stack s;
 	initialize(&s, 2);
 
-	Vector3 a = {2, 3, 4};
+	Vector3 a = {2, 3, 4},
+	        b = {1, 1, 1};
 
 	push(&s, &a);
-	push(&s, &a);
-	push(&s, &a);
-	push(&s, &a);
+	push(&s, &b);
+	push(&s, &a);  //stack is full
+	push(&s, &b);  //stack is full
 	
+	// Since there are 2 elements on the stack,
+	// the loop will fail to pop twice.
 	for(int i=0; i!=4; ++i){
 		Vector3 x = pop(&s);
 		printVector3(&x);
 	}
+
+	destroy(&s);
 }

@@ -28,6 +28,12 @@ void initialize(DynamicStack *stack){
 	stack->data = (Vector3*)malloc(sizeof(Vector3) * ALLOC_CHUNK);
 }
 
+// Free a stack.
+void destroy(DynamicStack *stack){
+	free(stack->data);
+	stack->capacity = stack->size = 0;
+}
+
 // Append an element.
 void push(DynamicStack *stack, const Vector3 *elem){
 	if(stack->size == stack->capacity){
@@ -81,4 +87,6 @@ int main(void){
 		Vector3 x = pop(&s);
 		printVector3(&x);
 	}
+
+	destroy(&s);
 }
