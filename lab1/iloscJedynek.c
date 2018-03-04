@@ -21,5 +21,5 @@ int main(void){
 		fputs("Error!\n", stderr);
 		return 1;
 	}
-	printf("iJ(%lu) == %d\n", v, iloscJedynek(v));
+	printf("Bitow '1' w %lu: %d\n", v, iloscJedynek(v));
 }
