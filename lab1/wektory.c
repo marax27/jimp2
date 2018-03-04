@@ -65,8 +65,8 @@ void normalize(Vector3 *a){
 
 // Porownanie wektorow. Ze wzgledu na niedoskonalosci
 // operacji zmiennoprzecinkowych, areEqual() zignoruje
-// bledy mniejsze niz EPSILON, o ile EXACT_COMPARE
-// nie jest ustawione.
+// bledy mniejsze niz EPSILON, chyba za flaga
+// EXACT_COMPARE jest ustawiona.
 
 //#define EXACT_COMPARE
 #define EPSILON 10e-9
@@ -88,8 +88,8 @@ void VectorToString(char *buf, const Vector3 *a){
 }
 
 int main(void){
-	Vector3 a = {3, 2, 0},
-	        b = {0, -2.5, 4.45};
+	Vector3 a = {3.0, 2.0, 0.0},
+	        b = {0.0, -2.5, 4.5};
 
 	char buffer[128];
 	Vector3 c;
@@ -111,4 +111,11 @@ int main(void){
 	c = normalized(&a);
 	VectorToString(buffer, &c);
 	printf("Normalized a: %s\n", buffer);
+
+	Vector3 u = {-1, tan(0.2), sqrt(3)};
+	Vector3 v = {-2, 2*sin(0.2)/cos(0.2), sqrt(12)};  //v == 2*u
+	normalize(&u);
+	normalize(&v);
+	// Wynik zalezny od flagi EXACT_COMPARE.
+	printf("Wektory u i v %ssa rowne.\n", areEqual(&u, &v) ? "" : "nie ");
 }

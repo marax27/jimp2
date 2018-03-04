@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 // iloscJedynek(n) - zwraca ilosc bitow o wartosci jeden dla podanego argumentu.
-int iloscJedynek(unsigned long int value){
+unsigned char iloscJedynek(unsigned long int value){
 	int bits = sizeof(value) * 8;
-	int result = 0;
+	unsigned char result = 0;
 	for(int i=0; i!=bits; ++i){
 		if(value & 1)
 			++result;
@@ -16,6 +16,10 @@ int iloscJedynek(unsigned long int value){
 
 int main(void){
 	unsigned long int v;
-	scanf("%lu", &v);
+	printf("Podaj liczbe calkowita: ");
+	if(scanf("%lu", &v) != 1){
+		fputs("Error!\n", stderr);
+		return 1;
+	}
 	printf("iJ(%lu) == %d\n", v, iloscJedynek(v));
 }

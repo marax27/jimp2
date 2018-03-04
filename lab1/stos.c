@@ -23,8 +23,13 @@ typedef struct{
 void initialize(Stack *stack, unsigned int max_size){
 	stack->capacity = max_size;
 	stack->size = 0;
-	if(max_size > 0)
+	if(max_size > 0){
 		stack->data = (Vector3*)malloc(sizeof(Vector3) * max_size);
+		if(!stack->data){
+			fputs("Error: failed to allocate memory.\n", stderr);
+			stack->capacity = 0;
+		}
+	}
 	else
 		stack->data = NULL;
 }

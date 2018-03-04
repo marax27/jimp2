@@ -14,7 +14,7 @@ void printVector3(Vector3 *vec){
 
 //************************************************************
 
-#define ALLOC_CHUNK 32
+#define ALLOC_CHUNK 8
 
 typedef struct{
 	unsigned int capacity, size;
@@ -26,6 +26,10 @@ void initialize(DynamicStack *stack){
 	stack->capacity = ALLOC_CHUNK;
 	stack->size = 0;
 	stack->data = (Vector3*)malloc(sizeof(Vector3) * ALLOC_CHUNK);
+	if(!stack->data){
+		fputs("Error: failed to allocate memory.\n", stderr);
+		stack->capacity = 0;
+	}
 }
 
 // Free a stack.
@@ -78,15 +82,17 @@ int main(void){
 
 	Vector3 a = {2, 3, 4};
 
-	push(&s, &a);
-	push(&s, &a);
-	push(&s, &a);
-	push(&s, &a);
+	for(int i=0; i!=17; ++i){
+		push(&s, &a);
+		printf("Status: %d/%d\n", s.size, s.capacity);
+	}
 	
+	printf("Size before pop(): %d\n", s.size);
 	for(int i=0; i!=6; ++i){
 		Vector3 x = pop(&s);
 		printVector3(&x);
 	}
+	printf("Size after pop(): %d\n", s.size);
 
 	destroy(&s);
 }
