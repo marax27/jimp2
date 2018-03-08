@@ -41,7 +41,7 @@ void destroy(DynamicStack *stack){
 // Append an element.
 void push(DynamicStack *stack, const Vector3 *elem){
 	if(stack->size == stack->capacity){
-		Vector3 *ptr = realloc(stack->data, stack->capacity + ALLOC_CHUNK);
+		Vector3 *ptr = realloc(stack->data, sizeof(Vector3)*(stack->capacity + ALLOC_CHUNK));
 		if(!ptr){
 			fputs("Error: not enough memory.", stderr);
 			return;
