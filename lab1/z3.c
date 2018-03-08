@@ -2,9 +2,9 @@
 
 int main(void){
 	double maximum, current;
-	int i = 1;
+	int i = 0;
 	while(1){
-		printf("Liczba #%d: ", i++);
+		printf("Liczba #%d: ", ++i);
 		if(scanf("%lf", &current) != 1){
 			if(i){
 				puts("Koniec.");
