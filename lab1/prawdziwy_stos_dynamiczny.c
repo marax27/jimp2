@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct{double x, y, z;} Vector3;
+
 //************************************************************
 
 #define ALLOC_CHUNK 4
@@ -25,79 +27,33 @@ void push(DynamicStack *stack, const void *elem, dsUint size_of_element);
 void pop(DynamicStack *stack, void *where, dsUint size_of_element);
 void peek(DynamicStack *stack, void *where, dsUint size_of_element);
 
+void charTest();
+
 //************************************************************
 
 typedef char TYP;
 
 int main(void){
+
 	DynamicStack s;
-	initialize(&s, sizeof(TYP));
-
-	puts("DynamicStack interactive");
-	puts("reset\tpeek\tview\tpush\tpop\tsize\tcapacity\texit\tquit\t");
-
-	while(1){
-		size_t n = 128;		
-		char *buffer = (char*)malloc(n);
-
-		printf("[%s] >> ", s.state ? "GOOD" : "FAIL");
-		if( getline(&buffer, &n, stdin) == -1){
-			fputs("Failure to read from stdin.\n", stderr);
-			break;
-		}
-
-		// Trim newline.
-		size_t c = strlen(buffer) - 1;
-		buffer[c] = '\0';  //newline
-
-		//printf("[%s](%lu)\n", buffer, n);
-		if(!strcmp(buffer, "reset")){
-			s.state = GOOD;
-		}
-		else if(!strcmp(buffer, "peek")){
-			TYP x;
-			peek(&s, &x, sizeof(TYP));
-			printf("Peek: %c (%x)\n", x, (unsigned)x);
-		}
-		else if(!strcmp(buffer, "view")){
-			size_t N = s.size*s.elem_size + 1;
-			if(N <= 1)
-				puts("View: stack empty.");
-			else{
-				char *view = (char*)malloc(N);
-				view[N] = '\0';
-				memcpy(view, s.data, N-1);
-				printf("View: {%s}\n", view);
-				free(view);
-			}
-		}
-		else if(!strcmp(buffer, "push")){
-			char c = rand() % 26 + 0x41;  //get random capital letter
-			printf("Adding '%c' (%d/%d -> ", c, s.size, s.capacity);
-			push(&s, &c, sizeof(TYP));
-			printf("%d/%d)\n", s.size, s.capacity);
-		}
-		else if(!strcmp(buffer, "pop")){
-			TYP x;
-			pop(&s, &x, sizeof(TYP));
-			if(s.state)
-				printf("Pop: %c\n", x);
-		}
-		else if(!strcmp(buffer, "size")){
-			printf("Size: %d objects\n", s.size);
-		}
-		else if(!strcmp(buffer, "capacity")){
-			printf("Capacity: %d objects\n", s.capacity);
-		}
-		else if(!strcmp(buffer, "exit") || !strcmp(buffer, "quit"))
-			break;
-		else
-			puts("?");
-
-		free(buffer);
+	initialize(&s, sizeof(Vector3));
+	for(int i=0; i!=15; ++i){
+		Vector3 a = {i, i, i};
+		push(&s, &a, sizeof(Vector3));
 	}
+	
+	printf("S: %d/%d (state=%d)\n", s.size, s.capacity, s.state);
+	Vector3 x;
+	for(int i=0; i!=15; ++i){
+		pop(&s, &x, sizeof(Vector3));
+		printf("%d) [%f, %f, %f]\n", i, x.x, x.y, x.z);
+	}
+	pop(&s, &x, sizeof(Vector3));  //blad
 
-	destroy(&s);
+	getc(stdin);
+	
+	puts("--------------------");
+	charTest();
 }
 
 //************************************************************
@@ -197,4 +153,77 @@ void peek(DynamicStack *stack, void *where, dsUint size_of_element){
 
 	char *last_elem = (char*)stack->data + stack->elem_size*(stack->size - 1);
 	memcpy(where, last_elem, stack->elem_size);
+}
+
+//************************************************************
+
+void charTest(){
+	DynamicStack s;
+	initialize(&s, sizeof(TYP));
+
+	puts("DynamicStack interactive");
+	puts("reset\tpeek\tview\tpush\tpop\tsize\tcapacity\texit\tquit\t");
+
+	while(1){
+		size_t n = 128;		
+		char *buffer = (char*)malloc(n);
+
+		printf("[%s] >> ", s.state ? "GOOD" : "FAIL");
+		if( getline(&buffer, &n, stdin) == -1){
+			fputs("Failure to read from stdin.\n", stderr);
+			break;
+		}
+
+		// Trim newline.
+		size_t c = strlen(buffer) - 1;
+		buffer[c] = '\0';  //newline
+
+		//printf("[%s](%lu)\n", buffer, n);
+		if(!strcmp(buffer, "reset")){
+			s.state = GOOD;
+		}
+		else if(!strcmp(buffer, "peek")){
+			TYP x;
+			peek(&s, &x, sizeof(TYP));
+			printf("Peek: %c (%x)\n", x, (unsigned)x);
+		}
+		else if(!strcmp(buffer, "view")){
+			size_t N = s.size*s.elem_size + 1;
+			if(N <= 1)
+				puts("View: stack empty.");
+			else{
+				char *view = (char*)malloc(N);
+				view[N] = '\0';
+				memcpy(view, s.data, N-1);
+				printf("View: {%s}\n", view);
+				free(view);
+			}
+		}
+		else if(!strcmp(buffer, "push")){
+			char c = rand() % 26 + 0x41;  //get random capital letter
+			printf("Adding '%c' (%d/%d -> ", c, s.size, s.capacity);
+			push(&s, &c, sizeof(TYP));
+			printf("%d/%d)\n", s.size, s.capacity);
+		}
+		else if(!strcmp(buffer, "pop")){
+			TYP x;
+			pop(&s, &x, sizeof(TYP));
+			if(s.state)
+				printf("Pop: %c\n", x);
+		}
+		else if(!strcmp(buffer, "size")){
+			printf("Size: %d objects\n", s.size);
+		}
+		else if(!strcmp(buffer, "capacity")){
+			printf("Capacity: %d objects\n", s.capacity);
+		}
+		else if(!strcmp(buffer, "exit") || !strcmp(buffer, "quit"))
+			break;
+		else
+			puts("?");
+
+		free(buffer);
+	}
+
+	destroy(&s);
 }

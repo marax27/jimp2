@@ -14,6 +14,14 @@ unsigned char iloscJedynek(unsigned long int value){
 	return result;
 }
 
+unsigned char iloscJedynekLepiej(unsigned long int value){
+	unsigned char result = 0;
+	do
+		result += value & 1;
+	while((value >>= 1));
+	return result;
+}
+
 int main(void){
 	unsigned long int v;
 	printf("Podaj liczbe calkowita: ");
