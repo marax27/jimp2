@@ -1,9 +1,89 @@
-#include "matrix.hpp"
-
+#include <initializer_list>
 #include <iostream>
+#include <string>
+
 using std::cout;
-using std::cerr;
 using std::ostream;
+
+/*
+ * Implementacja macierzy NxM w C++.
+ */
+
+//************************************************************
+
+class Matrix
+{
+	typedef unsigned int ui;
+
+public:
+	Matrix(ui x, ui y);
+	Matrix(const Matrix &model) : data(nullptr) { *this = model; }
+	Matrix(const std::initializer_list<std::initializer_list<double>> &values);
+	~Matrix(){ free(); }
+
+	// Copy a matrix.
+	Matrix& operator=(const Matrix &model);	
+
+	// Element access.
+	// Convention: matrix.at(number_of_row, number_of_column)
+	// Note: row and column numbering starts from 0.
+	double& at(ui r, ui c);
+	const double& at(ui r, ui c) const;
+
+	// Basic matrix operations.
+	Matrix operator+(const Matrix &right) const;
+	Matrix operator-(const Matrix &right) const;
+	Matrix operator*(const Matrix &right) const;
+	Matrix operator*(double right) const;
+	Matrix operator/(double right) const;
+
+	// Transposition.
+	Matrix transpose() const;
+
+	// Determinant.
+	double det() const;
+
+	// Getters.
+	ui getColumns() const { return columns; }
+	ui getRows() const { return rows; }
+
+	// Matrices comparison.
+	friend bool operator==(const Matrix &left, const Matrix &right);
+	friend bool operator!=(const Matrix &left, const Matrix &right);
+
+	// Create identity matrix.
+	static Matrix identity(ui dimension);
+
+	// Check matrix's properties.
+	bool isZero() const;
+	bool isIdentity() const;
+	bool isSquare() const;
+	bool isDiagonal() const;
+
+	//--------------------
+	class MatrixException : public std::exception {
+		std::string message;
+	public:
+		MatrixException(std::string msg="Error")
+			: message(msg) {}
+		virtual const char* what() const noexcept{
+			return message.c_str();
+		}
+	};
+	//--------------------
+
+private:
+	ui rows, columns;
+	double *data;
+
+	void init(bool init_with_zeroes=true);
+	void free();
+};
+
+//************************************************************
+
+std::ostream& operator<<(std::ostream &out, const Matrix &m);
+Matrix operator*(double left, const Matrix &right);
 
 //************************************************************
 
@@ -24,6 +104,9 @@ int main(){
 	     << A*C << '\n'
 		 << C.transpose() << '\n'
 		 << Matrix::identity(5) << '\n';
+	
+	Matrix D{{6, 0, -1, 2}, {-1, 2, 3, 6}, {4, -3, 0, 0}, {1, 5, 7, 2}};
+	cout << "Determinant of\n" << D << "is: " << D.det() << '\n';
 }
 
 //////////////////////////////////////////////////////////////
@@ -164,8 +247,7 @@ Matrix Matrix::operator/(double right) const{
 
 //************************************************************
 
-Matrix Matrix::transpose() const
-{
+Matrix Matrix::transpose() const{
 	//Matrix[x, y] == Transpose[y, x]
 	Matrix result(columns, rows);
 
@@ -174,6 +256,50 @@ Matrix Matrix::transpose() const
 			result.at(j, i) = at(i, j);
 
 	return result;
+}
+
+//************************************************************
+
+// Determinant; algorithm based on Gaussian elimination.
+double Matrix::det() const{
+	if(rows != columns)
+		throw MatrixException("Cannot compute determinant of non-square matrix.");
+
+	Matrix m(*this);
+
+	double data_holder = 0,
+	       result = 1.0;
+	int counter = 0,
+	    det_sign = 1,
+		size = rows;
+	
+	for(int i=0; i<size-1; ++i){
+		while(!m.at(i, i)){
+			if(counter == size-i-1)
+				return 0;
+			++counter;
+			for(int n=0; n<size; ++n)
+				std::swap(m.at(i, n), m.at(i+counter, n));
+			
+			det_sign = -det_sign;
+		}
+
+		counter = 0;
+
+		for(int j=i+1; j<size; ++j){
+			data_holder = m.at(j, i);
+			for(int n=0; n<size; ++n)
+				m.at(j, n) -= data_holder * m.at(i, n) / m.at(i, i);
+		}
+	}
+
+	for(int i=0; i!=size; ++i)
+		result *= m.at(i, i);
+	
+	if(!result)
+		result = 0.0;  //in case of -0;
+	
+	return det_sign * result;
 }
 
 //************************************************************

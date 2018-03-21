@@ -13,7 +13,7 @@ void printVector3(Vector3 *vec){
 
 typedef struct{
 	void **data;
-	unsigned top;
+	int top;
 	unsigned capacity;
 } Stack;
 
@@ -25,7 +25,7 @@ void* peek(Stack *stack);
 
 //************************************************************
 
-/*int main(void){
+int main(void){
 	Stack s;
 	initialize(&s, 2);
 
@@ -48,7 +48,7 @@ void* peek(Stack *stack);
 	}
 
 	destroy(&s);
-}*/
+}
 
 //************************************************************
 
@@ -70,6 +70,7 @@ void initialize(Stack *stack, unsigned max_size){
 // Free a stack.
 void destroy(Stack *stack){
 	free(stack->data);
+	stack->data = NULL;
 	stack->capacity = 0;
 	stack->top = -1;
 }

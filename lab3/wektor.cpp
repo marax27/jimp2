@@ -5,17 +5,22 @@ using std::cout;
 
 //************************************************************
 
-struct Vector3{
-	//Vector3() : x(0), y(0), z(0) {}
+//#define EXACT_COMPARE
+
+class Vector3{
+
+public:
+	// Constructors.
+	//Vector3() : x(0.0), y(0.0), z(0.0) {}
 	Vector3() = default;
 	Vector3(double x, double y, double z) : x(x), y(y), z(z) {}
 
-	double x = {0.0}, y = {0.0}, z = {0.0};
-
+	// Length of a vector.
 	double length() const {
 		return sqrt(x*x + y*y + z*z);
 	}
 
+	// Binary operators.
 	Vector3 operator+(const Vector3 &right) const {
 		return Vector3{x+right.x, y+right.y, z+right.z};
 	}
@@ -32,9 +37,27 @@ struct Vector3{
 		return *this * (1.0 / right);
 	}
 
+	// Comparison.
+	bool operator==(const Vector3 &right) const;
+	
+	bool operator!=(const Vector3 &right) const {
+		return !(*this == right);
+	}
+
+	// Unary operators.
+	Vector3 operator-() const {
+		return *this * -1.0;
+	}
+
+	Vector3 operator+() const {
+		return *this;
+	}
+
+	// Static functions.
 	static Vector3 cross(const Vector3 &left, const Vector3 &right);
 	static double dot(const Vector3 &left, const Vector3 &right);
 
+	// Normalization.
 	Vector3 normalized() const {
 		return *this / length();
 	}
@@ -42,22 +65,18 @@ struct Vector3{
 	void normalize(){
 		*this = normalized();
 	};
-};
 
-/* Rownowazne metodom powyzej, ale wymagaja nieco wiecej kodu.
-Vector3 operator+(const Vector3 &left, const Vector3 &right);
-Vector3 operator-(const Vector3 &left, const Vector3 &right);
-Vector3 operator*(const Vector3 &left, double right);
-Vector3 operator/(const Vector3 &left, double right); */
+	// Getters.
+	double X() const { return x; }
+	double Y() const { return y; }
+	double Z() const { return z; }
+
+protected:
+	double x = {0.0}, y = {0.0}, z = {0.0};
+};
 
 Vector3 inline operator*(double left, const Vector3 &right){
 	return right * left;
-}
-
-//#define EXACT_COMPARE
-bool operator==(const Vector3 &left, const Vector3 &right);
-bool operator!=(const Vector3 &left, const Vector3 &right){
-	return !(left == right);
 }
 
 // Wypisywanie wektora na ekran.
@@ -84,16 +103,16 @@ int main(){
 
 //************************************************************
 
-bool operator==(const Vector3 &left, const Vector3 &right){
+bool Vector3::operator==(const Vector3 &right) const {
 	#ifdef EXACT_COMPARE
 		return left.x == right.x &&
 		       left.y == right.y &&
 		       left.z == right.z;
 	#else
 		const double EPSILON = 10e-9;
-		return abs(left.x - right.x) < EPSILON &&
-		       abs(left.y - right.y) < EPSILON &&
-		       abs(left.z - right.z) < EPSILON;
+		return abs(x - right.x) < EPSILON &&
+		       abs(y - right.y) < EPSILON &&
+		       abs(z - right.z) < EPSILON;
 	#endif
 }
 
@@ -114,7 +133,7 @@ double Vector3::dot(const Vector3 &left, const Vector3 &right){
 //************************************************************
 
 std::ostream& operator<<(std::ostream &output, const Vector3 &v){
-	output << '[' << v.x << ", " << v.y << ", " << v.z << ']';
+	output << '[' << v.X() << ", " << v.Y() << ", " << v.Z() << ']';
 	return output;
 }
 

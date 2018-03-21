@@ -6,6 +6,14 @@ typedef struct{double x, y, z;} Vector3;
 
 //************************************************************
 
+/* DynamicStack pozwala przechowywac dowolna liczbe elementow
+ * jednego typu. Dodawane elementy sa kopiowane przez stos.
+ *
+ * Jesli obiekty sa tak duze, ze ich kopiowanie jest
+ * nieoplacalne, mozna rozwazyc utworzenie stosu wskaznikow
+ * na takie obiekty.
+ */
+
 #define ALLOC_CHUNK 4
 
 typedef unsigned int dsUint;
@@ -31,9 +39,9 @@ void charTest();
 
 //************************************************************
 
-typedef char TYP;
-
 int main(void){
+	// Etap 1: kilka podstawowych operacji na stosie na typ Vector3.
+	// Etap 2: interaktywny stos na typ char.
 
 	DynamicStack s;
 	initialize(&s, sizeof(Vector3));
@@ -50,6 +58,7 @@ int main(void){
 	}
 	pop(&s, &x, sizeof(Vector3));  //blad
 
+	puts("Press [Enter]");
 	getc(stdin);
 	
 	puts("--------------------");
@@ -159,10 +168,10 @@ void peek(DynamicStack *stack, void *where, dsUint size_of_element){
 
 void charTest(){
 	DynamicStack s;
-	initialize(&s, sizeof(TYP));
+	initialize(&s, sizeof(char));
 
 	puts("DynamicStack interactive");
-	puts("reset\tpeek\tview\tpush\tpop\tsize\tcapacity\texit\tquit\t");
+	puts("reset   peek   view   push   pop   size   capacity   exit   quit\n");
 
 	while(1){
 		size_t n = 128;		
@@ -183,8 +192,8 @@ void charTest(){
 			s.state = GOOD;
 		}
 		else if(!strcmp(buffer, "peek")){
-			TYP x;
-			peek(&s, &x, sizeof(TYP));
+			char x;
+			peek(&s, &x, sizeof(char));
 			printf("Peek: %c (%x)\n", x, (unsigned)x);
 		}
 		else if(!strcmp(buffer, "view")){
@@ -202,12 +211,12 @@ void charTest(){
 		else if(!strcmp(buffer, "push")){
 			char c = rand() % 26 + 0x41;  //get random capital letter
 			printf("Adding '%c' (%d/%d -> ", c, s.size, s.capacity);
-			push(&s, &c, sizeof(TYP));
+			push(&s, &c, sizeof(char));
 			printf("%d/%d)\n", s.size, s.capacity);
 		}
 		else if(!strcmp(buffer, "pop")){
-			TYP x;
-			pop(&s, &x, sizeof(TYP));
+			char x;
+			pop(&s, &x, sizeof(char));
 			if(s.state)
 				printf("Pop: %c\n", x);
 		}

@@ -13,7 +13,7 @@ class Matrix
 
 public:
 	Matrix(ui x, ui y);
-	Matrix(const Matrix &model){ *this = model; }
+	Matrix(const Matrix &model) : data(nullptr) { *this = model; }
 	Matrix(const std::initializer_list<std::initializer_list<double>> &values);
 	~Matrix(){ free(); }
 
@@ -35,6 +35,9 @@ public:
 
 	// Transposition.
 	Matrix transpose() const;
+
+	// Determinant.
+	double det() const;
 
 	// Getters.
 	ui getColumns() const { return columns; }
