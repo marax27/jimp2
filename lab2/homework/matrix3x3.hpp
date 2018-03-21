@@ -1,9 +1,8 @@
-#ifndef MATRIX_H
-#define MATRIX_H
+#ifndef MATRIX_3X3_HPP
+#define MATRIX_3X3_HPP
 
 #include <initializer_list>
-#include <exception>
-#include <string>
+#include <iostream>
 
 //************************************************************
 
@@ -12,13 +11,9 @@ class Matrix
 	typedef unsigned int ui;
 
 public:
-	Matrix(ui x, ui y);
+	Matrix(){ init(); }
 	Matrix(const Matrix &model){ *this = model; }
 	Matrix(const std::initializer_list<std::initializer_list<double>> &values);
-	~Matrix(){ free(); }
-
-	// Copy a matrix.
-	Matrix& operator=(const Matrix &model);	
 
 	// Element access.
 	// Convention: matrix.at(number_of_row, number_of_column)
@@ -26,32 +21,22 @@ public:
 	double& at(ui r, ui c);
 	const double& at(ui r, ui c) const;
 
+	// Copy a matrix.
+	Matrix& operator=(const Matrix &model);	
+
 	// Basic matrix operations.
 	Matrix operator+(const Matrix &right) const;
 	Matrix operator-(const Matrix &right) const;
 	Matrix operator*(const Matrix &right) const;
 	Matrix operator*(double right) const;
-	Matrix operator/(double right) const;
 
 	// Transposition.
-	Matrix transpose() const;
+	Matrix transpose();
 
-	// Getters.
-	ui getColumns() const { return columns; }
-	ui getRows() const { return rows; }
+	ui getColumns() const { return SIZE; }
+	ui getRows() const { return SIZE; }
 
-	// Matrices comparison.
-	friend bool operator==(const Matrix &left, const Matrix &right);
-	friend bool operator!=(const Matrix &left, const Matrix &right);
-
-	// Create identity matrix.
-	static Matrix identity(ui dimension);
-
-	// Check matrix's properties.
-	bool isZero() const;
-	bool isIdentity() const;
-	bool isSquare() const;
-	bool isDiagonal() const;
+	static Matrix identity();
 
 	//--------------------
 	class MatrixException : public std::exception {
@@ -66,16 +51,13 @@ public:
 	//--------------------
 
 private:
-	ui rows, columns;
-	double *data;
+	const static int SIZE = 3;
+	double data[SIZE*SIZE];
 
-	void init(bool init_with_zeroes=true);
-	void free();
+	void init();
 };
 
-//************************************************************
-
 std::ostream& operator<<(std::ostream &out, const Matrix &m);
-Matrix operator*(double left, const Matrix &right);
 
-#endif  //MATRIX_H
+//************************************************************
+#endif  //MATRIX_3X3_HPP

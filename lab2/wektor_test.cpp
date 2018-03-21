@@ -3,6 +3,9 @@
 
 using std::cout;
 
+#define CATCH_CONFIG_MAIN
+#include "../catch.hpp"
+
 //************************************************************
 
 struct Vector3{
@@ -34,43 +37,34 @@ struct Vector3{
 
 	static Vector3 cross(const Vector3 &left, const Vector3 &right);
 	static double dot(const Vector3 &left, const Vector3 &right);
+
+	Vector3 normalized() const {
+		return *this / length();
+	}
+
+	void normalize(){
+		*this = normalized();
+	};
 };
 
 /* Rownowazne metodom powyzej, ale wymagaja nieco wiecej kodu.
 Vector3 operator+(const Vector3 &left, const Vector3 &right);
 Vector3 operator-(const Vector3 &left, const Vector3 &right);
 Vector3 operator*(const Vector3 &left, double right);
-Vector3 operator/(const Vector3 &left, double right);*/
+Vector3 operator/(const Vector3 &left, double right); */
 
-//#define EXACT_COMPARE
-bool operator==(const Vector3 &left, const Vector3 &right);
-
-Vector3 operator*(double left, const Vector3 &right){
+Vector3 inline operator*(double left, const Vector3 &right){
 	return right * left;
 }
 
+//#define EXACT_COMPARE
+bool operator==(const Vector3 &left, const Vector3 &right);
+bool operator!=(const Vector3 &left, const Vector3 &right){
+	return !(left == right);
+}
+
 // Wypisywanie wektora na ekran.
-std::ostream& operator<<(std::ostream &output, const Vector3 &v){
-	output << '[' << v.x << ", " << v.y << ", " << v.z << ']';
-	return output;
-}
-
-//************************************************************
-
-int main(){
-	Vector3 a{2, 3, 4}, b{1, 1, 4}, c;
-
-	cout << "a:\t" << a << '\n'
-	     << "b:\t" << b << '\n'
-	     << "c:\t" << c << '\n'
-	     << "----------\n"
-	     << "a+b:\t" << a+b << '\n'
-	     << "a-b:\t" << a-b << '\n'
-	     << "5a:\t" << 5*a << " == " << a*5 << '\n'
-		 << "a/2:\t" << a / 2 << '\n'
-		 << "a dot b: " << Vector3::dot(a, b) << '\n'
-		 << "a x b:\t" << Vector3::cross(a, b) << '\n';
-}
+std::ostream& operator<<(std::ostream &output, const Vector3 &v);
 
 //************************************************************
 
@@ -102,3 +96,43 @@ double Vector3::dot(const Vector3 &left, const Vector3 &right){
 }
 
 //************************************************************
+
+std::ostream& operator<<(std::ostream &output, const Vector3 &v){
+	output << '[' << v.x << ", " << v.y << ", " << v.z << ']';
+	return output;
+}
+
+//************************************************************
+
+TEST_CASE("Vector initialization", "[Vector::Vector]"){
+	Vector3 A, B{5, 10, 15};
+	REQUIRE(A.x == 0);
+	REQUIRE(A.y == 0);
+	REQUIRE(A.z == 0);
+	REQUIRE(B.x == 5);
+	REQUIRE(B.y == 10);
+	REQUIRE(B.z == 15);
+}
+
+TEST_CASE("Vector length/norm/magnitude", "[Vector::length]"){
+	Vector3 A{2, 4, 4}, B{-2, 4, -4};
+
+	REQUIRE(A.length() == Approx(6.0));
+	REQUIRE(B.length() == Approx(6.0));
+	REQUIRE(Vector3().length() == 0.0);
+}
+
+TEST_CASE("Vector / number", "[Vector::operator/]"){
+	Vector3 A{6, 8, 1};
+	REQUIRE(A/4 == Vector3{1.5, 2.0, 0.25});
+}
+
+TEST_CASE("Cross product", "[Vector::cross]"){
+	Vector3 A{3, -3, 1}, B{4, 9, 2};
+	REQUIRE(Vector3::cross(A, B) == Vector3{-15, -2, 39});
+}
+
+TEST_CASE("Dot product", "[Vector::dot]"){
+	Vector3 A{3, -3, 1}, B{4, 9, 2};
+	REQUIRE(Vector3::dot(A, B) == Approx(12 - 27 + 2));
+}
