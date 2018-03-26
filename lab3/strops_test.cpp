@@ -126,9 +126,11 @@ TEST_CASE("Memory copying", "[memcpy]"){
 		jimp::memcpy(d2, s2, 4*sizeof(int));
 
 		REQUIRE( s2[0] == d2[0] );
-		REQUIRE( s2[0] == d2[0] );
-		REQUIRE( s2[0] == d2[0] );
-		REQUIRE( s2[0] == d2[0] );
+		REQUIRE( s2[1] == d2[1] );
+		REQUIRE( s2[2] == d2[2] );
+		REQUIRE( s2[3] == d2[3] );
+
+		delete[] d2;
 	}
 }
 

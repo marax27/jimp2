@@ -1,5 +1,6 @@
 #include <initializer_list>
 #include <iostream>
+#include <cstring>  //memcpy
 #include <string>
 
 using std::cout;
@@ -7,6 +8,7 @@ using std::ostream;
 
 /*
  * Implementacja macierzy NxM w C++.
+ * 
  */
 
 //************************************************************
@@ -17,12 +19,12 @@ class Matrix
 
 public:
 	Matrix(ui x, ui y);
-	Matrix(const Matrix &model) : data(nullptr) { *this = model; }
+	Matrix(const Matrix &model) { copy(model); }
 	Matrix(const std::initializer_list<std::initializer_list<double>> &values);
 	~Matrix(){ free(); }
 
 	// Copy a matrix.
-	Matrix& operator=(const Matrix &model);	
+	Matrix& operator=(const Matrix &model);
 
 	// Element access.
 	// Convention: matrix.at(number_of_row, number_of_column)
@@ -36,6 +38,13 @@ public:
 	Matrix operator*(const Matrix &right) const;
 	Matrix operator*(double right) const;
 	Matrix operator/(double right) const;
+
+	// Unary operators.
+	Matrix operator-() const;
+
+	Matrix operator+() const {
+		return *this;
+	}
 
 	// Transposition.
 	Matrix transpose() const;
@@ -61,13 +70,31 @@ public:
 	bool isDiagonal() const;
 
 	//--------------------
-	class MatrixException : public std::exception {
-		std::string message;
-	public:
-		MatrixException(std::string msg="Error")
-			: message(msg) {}
+	class MatrixException : public std::exception {};
+	
+	struct InitializerListDimensionException : public MatrixException {
 		virtual const char* what() const noexcept{
-			return message.c_str();
+			return "Cannot convert initializer_list to a matrix.";
+		}
+	};
+	struct OutOfRangeException : public MatrixException {
+		virtual const char* what() const noexcept{
+			return "Indices out of range.";
+		}
+	};
+	struct OperationForbiddenException : public MatrixException {
+		virtual const char* what() const noexcept{
+			return "Required operation cannot be performed: invalid argument/arguments.";
+		}
+	};
+	struct ZeroDimensionException : public MatrixException {
+		virtual const char* what() const noexcept{
+			return "Cannot initialize an empty matrix.";
+		}
+	};
+	struct InitializationException : public MatrixException {
+		virtual const char* what() const noexcept{
+			return "Failed to allocate memory for a matrix.";
 		}
 	};
 	//--------------------
@@ -77,6 +104,7 @@ private:
 	double *data;
 
 	void init(bool init_with_zeroes=true);
+	void copy(const Matrix &model);
 	void free();
 };
 
@@ -107,6 +135,9 @@ int main(){
 	
 	Matrix D{{6, 0, -1, 2}, {-1, 2, 3, 6}, {4, -3, 0, 0}, {1, 5, 7, 2}};
 	cout << "Determinant of\n" << D << "is: " << D.det() << '\n';
+
+	Matrix E(C), F = D, G(2, 4);
+	G = A;
 }
 
 //////////////////////////////////////////////////////////////
@@ -141,7 +172,7 @@ Matrix::Matrix(const std::initializer_list<std::initializer_list<double>> &value
 		data = nullptr;
 	}
 	else
-		throw MatrixException("Non-positive dimension.");
+		throw InitializerListDimensionException();
 	
 	bool set_columns = true;
 	for(const auto &i : values){
@@ -150,7 +181,7 @@ Matrix::Matrix(const std::initializer_list<std::initializer_list<double>> &value
 			set_columns = false;
 		}
 		else if(i.size() != columns)
-			throw MatrixException("Invalid initializer list: rows' lengths do not match.");
+			throw InitializerListDimensionException();
 	}
 
 	init();
@@ -165,11 +196,7 @@ Matrix::Matrix(const std::initializer_list<std::initializer_list<double>> &value
 
 Matrix& Matrix::operator=(const Matrix &model){
 	free();
-	rows = model.rows;
-	columns = model.columns;
-	init(false);
-	for(ui i=0; i!=rows*columns; ++i)
-		data[i] = model.data[i];
+	copy(model);
 	return *this;
 }
 
@@ -177,13 +204,13 @@ Matrix& Matrix::operator=(const Matrix &model){
 
 double& Matrix::at(ui r, ui c){
 	if( r >= rows || c >= columns )
-		throw MatrixException("Indices out of range.");
+		throw OutOfRangeException();
 	return data[c + columns*r];
 }
 
 const double& Matrix::at(ui r, ui c) const{
 	if( r >= rows || c >= columns )
-		throw MatrixException("Indices out of range.");
+		throw OutOfRangeException();
 	return data[c + columns*r];
 }
 
@@ -191,7 +218,7 @@ const double& Matrix::at(ui r, ui c) const{
 
 Matrix Matrix::operator+(const Matrix &right) const{
 	if(rows != right.rows || columns != right.columns)
-		throw MatrixException("Operator '+' not permitted: dimensions do not match.");
+		throw OperationForbiddenException();
 	
 	Matrix result(rows, columns);
 	for(ui i=0; i!=rows*columns; ++i)
@@ -203,7 +230,7 @@ Matrix Matrix::operator+(const Matrix &right) const{
 
 Matrix Matrix::operator-(const Matrix &right) const{
 	if(rows != right.rows || columns != right.columns)
-		throw MatrixException("Operator '-' not permitted: dimensions do not match.");
+		throw OperationForbiddenException();
 	
 	Matrix result(rows, columns);
 	for(ui i=0; i!=rows*columns; ++i)
@@ -215,7 +242,7 @@ Matrix Matrix::operator-(const Matrix &right) const{
 
 Matrix Matrix::operator*(const Matrix &right) const{
 	if(columns != right.rows)
-		throw MatrixException("Operator '*' not permitted: dimensions do not match.");
+		throw OperationForbiddenException();
 	
 	Matrix result(rows, right.columns);
 	for(ui y=0; y!=result.rows; ++y){
@@ -247,6 +274,16 @@ Matrix Matrix::operator/(double right) const{
 
 //************************************************************
 
+// Slightly faster than -1.0 * matrix
+Matrix Matrix::operator-() const{
+	Matrix result(rows, columns);
+	for(ui i = 0; i != rows*columns; ++i)
+		result.data[i] = -this->data[i];
+	return result;
+}
+
+//************************************************************
+
 Matrix Matrix::transpose() const{
 	//Matrix[x, y] == Transpose[y, x]
 	Matrix result(columns, rows);
@@ -263,7 +300,7 @@ Matrix Matrix::transpose() const{
 // Determinant; algorithm based on Gaussian elimination.
 double Matrix::det() const{
 	if(rows != columns)
-		throw MatrixException("Cannot compute determinant of non-square matrix.");
+		throw OperationForbiddenException();
 
 	Matrix m(*this);
 
@@ -356,12 +393,11 @@ bool Matrix::isDiagonal() const{
 
 // Allocate and initialize data memory.
 void Matrix::init(bool init_with_zeroes){
-	if(data)
-		free();
-
 	if(rows*columns == 0)
-		throw MatrixException("Cannot create empty matrix.");
+		throw ZeroDimensionException();
 	data = new double[rows*columns];
+	if(!data)
+		throw InitializationException();
 
 	if(init_with_zeroes){
 		// Initialize all fields with zeroes.
@@ -370,12 +406,20 @@ void Matrix::init(bool init_with_zeroes){
 	}
 }
 
+// Copy model's elements to *this. ASSUME no memory is allocated in *this.
+void Matrix::copy(const Matrix &model){
+	rows = model.rows;
+	columns = model.columns;
+	init(false);
+	memcpy(data, model.data, rows*columns*sizeof(double));
+}
+
 // Free memory and reset all fields.
 void Matrix::free(){
-	std::cout << "Address: " << (void*)data << std::endl;
-	if(data != nullptr)
+	if(data){
 		delete[] data;
-	data = nullptr;
+		data = nullptr;
+	}
 	rows = columns = 0;
 }
 
