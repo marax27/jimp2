@@ -6,6 +6,8 @@
 
 using namespace std;
 
+void run();
+
 namespace JiMP2 {
 
 BMP::BMP(uint16_t width, uint16_t height) :
@@ -73,10 +75,9 @@ std::ostream& operator<<(std::ostream& os, const BMP& bmp) {
 }
 }
 
-
 int main() {
 
-	const uint16_t imgWidth = 800;
+	/*const uint16_t imgWidth = 800;
 	const uint16_t imgHeight = 600;
 
 	JiMP2::BMP bmp(imgWidth, imgHeight);
@@ -84,11 +85,14 @@ int main() {
 	for (int i = 0; i < imgWidth; ++i) {
 		bmp.setPixel(i, (i*float(imgHeight))/imgWidth, 255, 0, 0);
 	}
+	
 
 	std::ofstream outfile("test.bmp", std::ofstream::binary);
 	outfile << bmp;
 
-	std::cout << "end." << std::endl;
+	std::cout << "end." << std::endl;*/
+
+	run();
 
 	return 0;
 }
