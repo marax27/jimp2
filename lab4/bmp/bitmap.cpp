@@ -9,26 +9,31 @@
 // In future, double may be necessary.
 typedef float fp_t;
 
-const fp_t STEP_SIZE = 0.99;
-
 // Return squared argument.
 fp_t squared(fp_t x){
 	return x*x;
 }
 
-// 2D point representation.
+// Convert degrees to radians.
+fp_t deg2Rad(fp_t degrees){
+	return degrees * M_PI / 180.0;
+}
+
+// Representation of a 2D point.
 struct Point{
-	uint16_t x = {0},
-	         y = {0};
+	int x = {0},
+	    y = {0};
 	
 	static fp_t distance(const Point &a, const Point &b){
 		return sqrt( squared((int)a.x - b.x) + squared((int)a.y - b.y) );
 	}
 };
 
-// RGB colour representation.
+// Representation of RGB colour.
 struct Colour{
-	unsigned char r = {0}, g = {0}, b = {0};
+	unsigned char r = {0},
+	              g = {0},
+	              b = {0};
 };
 
 //************************************************************
@@ -36,6 +41,9 @@ struct Colour{
 void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour colour);
 void drawCircle(JiMP2::BMP &bitmap, Point S, uint16_t r, Colour colour);
 void drawDisk(JiMP2::BMP &bitmap, Point S, uint16_t r, Colour colour);
+void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
+	fp_t alfa1, fp_t alfa2, Colour colour);
+
 
 //************************************************************
 
@@ -57,12 +65,16 @@ void run(){
 	// Disk drawing.
 	drawDisk(bmp, {400, 400}, 80, {60, 60, 60});
 
+	// Arc drawing.
+	drawArc(bmp, {550, 120}, 75, 30, 330, {60, 60, 60});
+
 	std::ofstream outfile("test.bmp", std::ofstream::binary);
 	outfile << bmp;
 }
 
 //************************************************************
 
+// Linia.
 // Implementation of Bresenham's algorithm.
 // https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
 void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour colour){
@@ -97,6 +109,7 @@ void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour colour){
 
 //************************************************************
 
+// Okrag.
 // Implementation of midpoint circle algorithm.
 // https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
 void drawCircle(JiMP2::BMP &bitmap, Point S, uint16_t r, Colour colour){
@@ -131,6 +144,7 @@ void drawCircle(JiMP2::BMP &bitmap, Point S, uint16_t r, Colour colour){
 
 //************************************************************
 
+// Kolo.
 // Variation of midpoint circle algorithm.
 // https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
 void drawDisk(JiMP2::BMP &bitmap, Point S, uint16_t r, Colour colour){
@@ -158,3 +172,19 @@ void drawDisk(JiMP2::BMP &bitmap, Point S, uint16_t r, Colour colour){
 		}
 	}
 }
+
+//************************************************************
+
+// Wycinek okregu - luk.
+// Naiwna implementacja.
+void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
+	fp_t alfa1, fp_t alfa2, Colour colour){
+	
+	alfa1 = deg2Rad(alfa1);
+	alfa2 = deg2Rad(alfa2);
+
+	fp_t step = acos(1 - 0.5*squared(0.99/r));
+	for(fp_t angle = alfa1; angle < alfa2; angle += step)
+		bitmap.setPixel(S.x + r*cos(angle), S.y + r*sin(angle), colour.r, colour.g, colour.b);
+}
+
