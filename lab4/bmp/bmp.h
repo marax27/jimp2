@@ -54,6 +54,9 @@ public:
 	void setPixel(uint16_t x, uint16_t y, unsigned char r, unsigned char g,
 			unsigned char b);
 
+	uint16_t getWidth() const { return bitmapCoreHeader.bmpWidth; }
+	uint16_t getHeight() const { return bitmapCoreHeader.bmpHeight; }
+
 	friend std::ostream& operator<<(std::ostream& os, const BMP& bmp);
 };
 
