@@ -120,7 +120,7 @@ void testWycinkow(){
 
 void safeDrawPoint(JiMP2::BMP &bitmap, Point P, Colour clr){
 	if(in(0, P.x, bitmap.getWidth()-1) && in(0, P.y, bitmap.getHeight()-1))
-		bitmap.setPixel(P.x, P.y, clr.r, clr.g, clr.b)
+		bitmap.setPixel(P.x, P.y, clr.r, clr.g, clr.b);
 }
 
 //************************************************************
