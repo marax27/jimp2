@@ -151,7 +151,7 @@ void arcTest(){
 		drawArc(bmp, {50, 150}, r, 30+90*i, 60+90*i, black);
 
 	for(int i=0; i<6; ++i)
-		drawArc(bmp, {150+100*i, 150}, r, 0, 30*(1+i), black);
+		drawArc(bmp, {150+100*i, 150}, r, 0, 50*(1+i), black);
 
 	std::ofstream writer("arc.bmp", std::ofstream::binary);
 	writer << bmp;
@@ -300,25 +300,28 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 
 	struct{
 		uint16_t y_min = {0}, y_max = {0};
-		void set(){
-			if(y_min > y_max)
-				std::swap(y_min, y_max);
-		}
 	} q1, q2, q3, q4;
 	
 	// I cwiartka.
-	if(alfa1 < 90.0){
+	if(alfa1 < 90.0f){
 		q1.y_max = S.y - r*sin(a1);
-		q1.y_min = (alfa2 < 90.0) ? (S.y - r*sin(a2)) : (S.y - r);
+		q1.y_min = (alfa2 < 90.0f) ? (S.y - r*sin(a2)) : (S.y - r);
 	}
 	// II cwiartka.
-	if(in(90.0f, alfa1, 180.0f) || (alfa1 < 90.0 && alfa2 >= 90.0)){
-		q2.y_min = (alfa1 > 90.0) ? (S.y - r*sin(a1)) : (S.y - r);
-		q2.y_max = (alfa2 < 180.0) ? (S.y - r*sin(a2)) : S.y;
-		q2.set();
+	if(in(90.0f, alfa1, 180.0f) || (alfa1 < 90.0f && alfa2 >= 90.0f)){
+		q2.y_max = (alfa2 < 180.0f) ? (S.y - r*sin(a2)) : S.y;
+		q2.y_min = (alfa1 > 90.0f) ? (S.y - r*sin(a1)) : (S.y - r);
 	}
-	printf("(%d, %d, %.2f, %.2f) gives (%d, %d)\n", 
-		S.x, S.y, alfa1, alfa2, q2.y_min, q2.y_max);
+	// III cwiartka.
+	if(in(180.0f, alfa1, 270.0f) || (alfa1 < 180.0f && alfa2 >= 180.0f)){
+		q3.y_max = (alfa2 < 270.0f) ? (S.y - r*sin(a2)) : (S.y + r);
+		q3.y_min = (alfa1 > 180.0f) ? (S.y - r*sin(a1)) : S.y;
+	}
+	// IV cwiartka.
+	if(alfa2 > 270.0f){
+		q4.y_max = (alfa1 > 270.0f) ? (S.y - r*sin(a1)) : (S.y + r);
+		q4.y_min = S.y - r*sin(a2);
+	}
 
 	while(x >= y){
 		// I
@@ -333,10 +336,17 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 		if(in(q2.y_min, uint16_t(S.y-x), q2.y_max))
 			safeDrawPoint(bitmap, {S.x-y, S.y-x}, clr);
 
-		//safeDrawPoint(bitmap, {S.x+y, S.y+x}, clr);// I
-		//safeDrawPoint(bitmap, {S.x+x, S.y+y}, clr);// I
-		//safeDrawPoint(bitmap, {S.x-y, S.y+x}, clr);// I
-		//safeDrawPoint(bitmap, {S.x-x, S.y+y}, clr);// I
+		// III
+		if(in(q3.y_min, uint16_t(S.y+x), q3.y_max))
+			safeDrawPoint(bitmap, {S.x-y, S.y+x}, clr);
+		if(in(q3.y_min, uint16_t(S.y+y), q3.y_max))
+			safeDrawPoint(bitmap, {S.x-x, S.y+y}, clr);
+
+		// IV
+		if(in(q4.y_min, uint16_t(S.y+y), q4.y_max))
+			safeDrawPoint(bitmap, {S.x+x, S.y+y}, clr);
+		if(in(q4.y_min, uint16_t(S.y+x), q4.y_max))
+			safeDrawPoint(bitmap, {S.x+y, S.y+x}, clr);
 
 		if(err <= 0){
 			++y;
@@ -350,18 +360,6 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 		}
 	}
 }
-
-// Naiwna implementacja.
-/*void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
-	fp_t alfa1, fp_t alfa2, Colour clr){
-	
-	alfa1 = deg2Rad(alfa1);
-	alfa2 = deg2Rad(alfa2);
-
-	fp_t step = acos(1 - 0.5*squared(0.99/r));
-	for(fp_t angle = alfa1; angle < alfa2; angle += step)
-		bitmap.setPixel(S.x + r*cos(angle), S.y + r*sin(angle), clr.r, clr.g, clr.b);
-}*/
 
 //************************************************************
 
