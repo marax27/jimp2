@@ -132,6 +132,7 @@ int linearInterpolation(Point A, Point B, int y){
 
 //************************************************************
 
+// Rysowanie punktu, z pominieciem sytuacji, gdy punkt lezy poza bitmapa.
 void safeDrawPoint(JiMP2::BMP &bitmap, Point P, Colour clr){
 	if(in(0, P.x, (int)bitmap.getWidth()+1) && in(0, P.y, (int)bitmap.getHeight()+1))
 		bitmap.setPixel(P.x, P.y, clr.r, clr.g, clr.b);
@@ -481,7 +482,13 @@ void drawRegularPolygon(JiMP2::BMP &bitmap, Point S, int n, fp_t side_length, Co
 
 }
 
+
+
+
 //////////////////////////////////////////////////////////////
+
+
+
 
 void lineTest(){
 	JiMP2::BMP bmp(imgWidth, imgHeight);
@@ -531,13 +538,13 @@ void arcSectorTest(){
 
 	int r = 50;
 	for(int i=0; i<6; ++i)
-		drawArc(bmp, {50+100*i, 50}, r, 30*i, 360-30*i, black);
+		drawArc(bmp, {50+105*i, 50}, r, 30*i, 360-30*i, black);
 
 	for(int i=0; i<4; ++i)
 		drawArc(bmp, {50, 150}, r, 30+90*i, 60+90*i, black);
 
 	for(int i=0; i<6; ++i)
-		drawArc(bmp, {150+100*i, 150}, r, 0, 50*(1+i), black);
+		drawArc(bmp, {150+105*i, 150}, r, 0, 50*(1+i), black);
 
 	for(int i=0; i<8; ++i)
 		drawCircularSector(bmp, {50+2*r*i, 350}, r, 20*i, 360-20*i, blue);
