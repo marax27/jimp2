@@ -56,7 +56,6 @@ template<typename T, typename U> void limitTo(T min, U &x, T max){
 
 // Reprezentacja punktu na bitmapie.
 struct Point{
-	Point() = default;
 	Point(int x, int y) : x(x), y(y) {}
 
 	int x = {0},
@@ -155,9 +154,9 @@ void arcSectorTest(){
 
 	for(int i=0; i<8; ++i)
 		drawCircularSector(bmp, {50+2*r*i, 350}, r, 20*i, 360-20*i, blue);
-	
-	const int r1 = 70;
-	drawCircularSector(bmp, {w/2 - r1, h-r1}, r1, 95, 260, {200, 0, 0});
+
+	for(int i=0; i<8; ++i)
+		drawCircularSector(bmp, {50+2*r*i, 350+3*r}, r, 40*i, 40*(i+1), blue);	
 
 	std::ofstream writer("arcsector.bmp", std::ofstream::binary);
 	writer << bmp;
@@ -447,6 +446,52 @@ void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 		for(; y <= S.y; ++y){
 			Point P(linearInterpolation(S, V, y), y);
 			Point R(linearInterpolation(S, U, y), y);
+			drawLine(bitmap, P, R, clr);
+		}
+	}
+	if(isInThirdQuarter(alfa1, alfa2)){
+		Point U(
+			(alfa1 >= 180.0f) ? (S.x + r*cos(a1)) : (S.x-r),
+			(alfa1 >= 180.0f) ? (S.y - r*sin(a1)) : S.y
+		);
+		Point V(
+			(alfa2 < 270.0f) ? (S.x + r*cos(a2)) : S.x,
+			(alfa2 < 270.0f) ? (S.y - r*sin(a2)) : (S.y+r)
+		);
+		// V.x > U.x; V.y > U.y
+
+		for(y = V.y; y >= U.y; --y){
+			Point P(linearInterpolation(V, S, y), y);
+			Point Q(S.x - sqrt(r*r - squared(y-S.y)), y);
+			drawLine(bitmap, P, Q, clr);
+		}
+
+		for(; y >= S.y; --y){
+			Point P(linearInterpolation(V, S, y), y);
+			Point R(linearInterpolation(U, S, y), y);
+			drawLine(bitmap, P, R, clr);
+		}
+	}
+	if(isInFourthQuarter(alfa1, alfa2)){
+		Point U(
+			(alfa1 >= 270.0f) ? (S.x + r*cos(a1)) : S.x,
+			(alfa1 >= 270.0f) ? (S.y - r*sin(a1)) : (S.y+r)
+		);
+		Point V(
+			S.x + r*cos(a2),
+			S.y - r*sin(a2)
+		);
+		// V.x > U.x; U.y > V.y
+
+		for(y = U.y; y >= V.y; --y){
+			Point P(linearInterpolation(U, S, y), y);
+			Point Q(S.x + sqrt(r*r - squared(y-S.y)), y);
+			drawLine(bitmap, P, Q, clr);
+		}
+
+		for(; y >= S.y; --y){
+			Point P(linearInterpolation(U, S, y), y);
+			Point R(linearInterpolation(V, S, y), y);
 			drawLine(bitmap, P, R, clr);
 		}
 	}
