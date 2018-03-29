@@ -3,6 +3,10 @@
 #include <cmath>
 #include "bmp.h"
 
+// Proste operacje na bitmapach.
+// Funkcja run() wywoluje szereg testow, a kazdy z nich
+// generuje osobny plik BMP.
+
 //************************************************************
 
 // Typ zmiennoprzecinkowy uzywany przy obliczeniach.
@@ -54,6 +58,8 @@ template<typename T, typename U> void limitTo(T min, U &x, T max){
 		x = max;
 }
 
+//************************************************************
+
 // Reprezentacja punktu na bitmapie.
 struct Point{
 	Point(int x, int y) : x(x), y(y) {}
@@ -75,6 +81,8 @@ struct Colour{
 	              b = {0};
 };
 
+class DrawingException : public std::exception {};
+
 //************************************************************
 
 // Oblicz wsp. x punktu (x, y) lezacego na odcinku AB.
@@ -88,118 +96,28 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	fp_t alfa1, fp_t alfa2, Colour clr);
 void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	fp_t alfa1, fp_t alfa2, Colour clr);
+
 void drawEllipse(JiMP2::BMP &bitmap, Point S, uint16_t a, uint16_t b, Colour clr);
 void drawRectangle(JiMP2::BMP &bitmap, Point A, Point B, Colour clr);
+void drawRegularPolygon(JiMP2::BMP &bitmap, Point S, int n, fp_t side_length, Colour clr);
 
 //************************************************************
 
+void lineTest();
+void circleDiskTest();
+void arcSectorTest();
+void ellipseTest();
+void polygonTest();
+
 const uint16_t imgWidth = 800;
 const uint16_t imgHeight = 600;
-
-void lineTest(){
-	JiMP2::BMP bmp(imgWidth, imgHeight);
-
-	const Colour clr{0, 0, 128};
-	const Colour clr1{192, 32, 32};
-	const int S = 500;   //duza wartosc, by linie wykraczaly za bitmape
-	const int mx = imgWidth/2;
-	const int my = imgHeight/2;
-	const Point center = {mx, my};
-
-	drawLine(bmp, center, {mx+S, my}, clr);
-	drawLine(bmp, center, {mx, my-S}, clr);
-	drawLine(bmp, center, {mx-S, my}, clr);
-	drawLine(bmp, center, {mx, my+S}, clr);
-
-	for(float a = 25.0f; a < 360.0f; a += 25.0f)
-		drawLine(bmp, center, Point(mx + S*cos(deg2Rad(a)), my + S*sin(deg2Rad(a))), clr);
-
-	std::ofstream writer("line.bmp", std::ofstream::binary);
-	writer << bmp;
-}
-
-void circleDiskTest(){
-	JiMP2::BMP bmp(imgWidth, imgHeight);
-
-	const int r = 100;
-	Colour c1{128, 0, 255};
-
-	drawCircle(bmp, {r, r}, r, c1);
-	drawCircle(bmp, {0, imgHeight}, r, c1);
-	drawCircle(bmp, {-5, imgHeight+5}, r, c1);
-	for(int i=0; i!=5; ++i)
-		drawCircle(bmp, {3*r, -25*i}, r, c1);
-
-	drawDisk(bmp, {r, 3*r}, r, c1);
-	drawDisk(bmp, {r, 7*r}, 3*r, {0, 0, 0});
-
-	std::ofstream writer("circledisk.bmp", std::ofstream::binary);
-	writer << bmp;
-}
-
-void arcSectorTest(){
-	const uint16_t w = 800, h = 600;
-	JiMP2::BMP bmp(w, h);
-	Colour black{0, 0, 0}, blue{64, 64, 128};
-
-	int r = 50;
-	for(int i=0; i<6; ++i)
-		drawArc(bmp, {50+100*i, 50}, r, 30*i, 360-30*i, black);
-
-	for(int i=0; i<4; ++i)
-		drawArc(bmp, {50, 150}, r, 30+90*i, 60+90*i, black);
-
-	for(int i=0; i<6; ++i)
-		drawArc(bmp, {150+100*i, 150}, r, 0, 50*(1+i), black);
-
-	for(int i=0; i<8; ++i)
-		drawCircularSector(bmp, {50+2*r*i, 350}, r, 20*i, 360-20*i, blue);
-
-	for(int i=0; i<8; ++i)
-		drawCircularSector(bmp, {50+2*r*i, 350+3*r}, r, 40*i, 40*(i+1), blue);	
-
-	std::ofstream writer("arcsector.bmp", std::ofstream::binary);
-	writer << bmp;
-}
-
-void ellipseTest(){
-	const uint16_t w = 800, h = 600;
-	JiMP2::BMP bmp(w, h);
-
-	const Point mid{w/2, h/2};
-
-	drawEllipse(bmp, mid, w/2, h/2, {0, 0, 0});
-	drawEllipse(bmp, mid, w/3, h/3, {50, 50, 50});
-	drawEllipse(bmp, mid, w/4, h/4, {100, 100, 100});
-	drawEllipse(bmp, mid, w/6, h/6, {150, 150, 150});
-	drawEllipse(bmp, mid, w/9, h/9, {200, 200, 200});
-
-	drawEllipse(bmp, mid, 100, 100, {192, 0, 0});
-	drawEllipse(bmp, mid, 100, 200, {192, 0, 0});
-	drawEllipse(bmp, mid, 100, 400, {192, 0, 0});
-
-	std::ofstream writer("ellipse.bmp", std::ofstream::binary);
-	writer << bmp;
-}
-
-void rectangleTest(){
-	const uint16_t w = 800, h = 600;
-	JiMP2::BMP bmp(w, h);
-
-	drawRectangle(bmp, {220, 220}, {120, 420}, {0, 0, 0});
-	drawRectangle(bmp, {-100, -100}, {300, 200}, {0, 0, 192});	
-	drawRectangle(bmp, {600, 500}, {300, 200}, {0, 168, 0});	
-
-	std::ofstream writer("rectangle.bmp", std::ofstream::binary);
-	writer << bmp;
-}
 
 void run(){
 	lineTest();
 	circleDiskTest();
 	arcSectorTest();
 	ellipseTest();
-	rectangleTest();
+	polygonTest();
 }
 
 //************************************************************
@@ -400,12 +318,6 @@ void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	alfa2 = std::max(alfa1, alfa2);
 	fp_t a1 = deg2Rad(alfa1);
 	fp_t a2 = deg2Rad(alfa2);
-
-	#ifdef DEBUG
-	safeDrawPoint(bitmap, S, {0xff, 0, 0});
-	drawCircle(bitmap, S, r, {0xaa, 0xaa, 0xaa});
-	#endif
-
 	int y;
 
 	if(isInFirstQuarter(alfa1, alfa2)){
@@ -438,14 +350,14 @@ void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 		// V.x < U.x; V.y > U.y
 
 		for(y = U.y; y <= V.y; ++y){
-			Point P(linearInterpolation(U, S, y), y);
+			Point P(linearInterpolation(S, U, y), y);
 			Point Q(S.x - sqrt(r*r - squared(y-S.y)), y);
 			drawLine(bitmap, P, Q, clr);
 		}
 
 		for(; y <= S.y; ++y){
-			Point P(linearInterpolation(S, V, y), y);
-			Point R(linearInterpolation(S, U, y), y);
+			Point P(linearInterpolation(S, U, y), y);
+			Point R(linearInterpolation(S, V, y), y);
 			drawLine(bitmap, P, R, clr);
 		}
 	}
@@ -544,6 +456,135 @@ void drawRectangle(JiMP2::BMP &bitmap, Point A, Point B, Colour clr){
 	drawLine(bitmap, A, {A.x, B.y}, clr);
 	drawLine(bitmap, {B.x, A.y}, B, clr);
 	drawLine(bitmap, {A.x, B.y}, B, clr);
+}
+
+//************************************************************
+
+// Wielokat foremny.
+// Naiwna implementacja.
+void drawRegularPolygon(JiMP2::BMP &bitmap, Point S, int n, fp_t side_length, Colour clr){
+	if(n < 3 || side_length <= 0.0)
+		throw DrawingException();
+	
+	fp_t phi = 2*M_PI / n;
+	fp_t radius = side_length / sqrt(2 * (1 - cos(phi)));  //z twierdzenia cosinusow
+
+	Point p1(S.x, S.y - radius);
+	for(int i = 1; i <= n; ++i){
+		Point p2(
+			S.x - radius*sin(i*phi), //cos(i*phi),
+			S.y - radius*cos(i*phi) //sin(i*phi)
+		);
+		drawLine(bitmap, p1, p2, clr);
+		p1 = p2;
+	}
+
+}
+
+//////////////////////////////////////////////////////////////
+
+void lineTest(){
+	JiMP2::BMP bmp(imgWidth, imgHeight);
+
+	const Colour clr{0, 0, 128};
+	const Colour clr1{192, 32, 32};
+	const int S = 500;   //duza wartosc, by linie wykraczaly za bitmape
+	const int mx = imgWidth/2;
+	const int my = imgHeight/2;
+	const Point center = {mx, my};
+
+	drawLine(bmp, center, {mx+S, my}, clr);
+	drawLine(bmp, center, {mx, my-S}, clr);
+	drawLine(bmp, center, {mx-S, my}, clr);
+	drawLine(bmp, center, {mx, my+S}, clr);
+
+	for(float a = 25.0f; a < 360.0f; a += 25.0f)
+		drawLine(bmp, center, Point(mx + S*cos(deg2Rad(a)), my + S*sin(deg2Rad(a))), clr);
+
+	std::ofstream writer("line.bmp", std::ofstream::binary);
+	writer << bmp;
+}
+
+void circleDiskTest(){
+	JiMP2::BMP bmp(imgWidth, imgHeight);
+
+	const int r = 100;
+	Colour c1{128, 0, 255};
+
+	drawCircle(bmp, {r, r}, r, c1);
+	drawCircle(bmp, {0, imgHeight}, r, c1);
+	drawCircle(bmp, {-5, imgHeight+5}, r, c1);
+	for(int i=0; i!=5; ++i)
+		drawCircle(bmp, {3*r, -25*i}, r, c1);
+
+	drawDisk(bmp, {r, 3*r}, r, c1);
+	drawDisk(bmp, {r, 7*r}, 3*r, {0, 0, 0});
+
+	std::ofstream writer("circledisk.bmp", std::ofstream::binary);
+	writer << bmp;
+}
+
+void arcSectorTest(){
+	const uint16_t w = 800, h = 600;
+	JiMP2::BMP bmp(w, h);
+	Colour black{0, 0, 0}, blue{64, 64, 128};
+
+	int r = 50;
+	for(int i=0; i<6; ++i)
+		drawArc(bmp, {50+100*i, 50}, r, 30*i, 360-30*i, black);
+
+	for(int i=0; i<4; ++i)
+		drawArc(bmp, {50, 150}, r, 30+90*i, 60+90*i, black);
+
+	for(int i=0; i<6; ++i)
+		drawArc(bmp, {150+100*i, 150}, r, 0, 50*(1+i), black);
+
+	for(int i=0; i<8; ++i)
+		drawCircularSector(bmp, {50+2*r*i, 350}, r, 20*i, 360-20*i, blue);
+
+	for(int i=0; i<8; ++i)
+		drawCircularSector(bmp, {50+2*r*i, 350+3*r}, r, 40*i, 40*(i+1), blue);	
+
+	std::ofstream writer("arcsector.bmp", std::ofstream::binary);
+	writer << bmp;
+}
+
+void ellipseTest(){
+	const uint16_t w = 800, h = 600;
+	JiMP2::BMP bmp(w, h);
+
+	const Point mid{w/2, h/2};
+
+	drawEllipse(bmp, mid, w/2, h/2, {0, 0, 0});
+	drawEllipse(bmp, mid, w/3, h/3, {50, 50, 50});
+	drawEllipse(bmp, mid, w/4, h/4, {100, 100, 100});
+	drawEllipse(bmp, mid, w/6, h/6, {150, 150, 150});
+	drawEllipse(bmp, mid, w/9, h/9, {200, 200, 200});
+
+	drawEllipse(bmp, mid, 100, 100, {192, 0, 0});
+	drawEllipse(bmp, mid, 100, 200, {192, 0, 0});
+	drawEllipse(bmp, mid, 100, 400, {192, 0, 0});
+
+	std::ofstream writer("ellipse.bmp", std::ofstream::binary);
+	writer << bmp;
+}
+
+void polygonTest(){
+	const uint16_t w = 800, h = 600;
+	JiMP2::BMP bmp(w, h);
+
+	drawRectangle(bmp, {220, 220}, {120, 420}, {0, 0, 0});
+	drawRectangle(bmp, {-100, -100}, {300, 200}, {0, 0, 192});	
+	drawRectangle(bmp, {600, 50}, {300, 200}, {0, 168, 0});
+
+	drawRegularPolygon(bmp, {400, 400}, 10, 100, {96, 0, 96});
+	drawRegularPolygon(bmp, {400, 400}, 8, 90, {144, 144, 0});
+	drawRegularPolygon(bmp, {400, 400}, 6, 80, {192, 0, 0});
+	drawRegularPolygon(bmp, {400, 400}, 4, 60, {0, 192, 0});
+	drawRegularPolygon(bmp, {400, 400}, 3, 40, {0, 0, 192});
+
+	std::ofstream writer("polygon.bmp", std::ofstream::binary);
+	writer << bmp;
 }
 
 //************************************************************
