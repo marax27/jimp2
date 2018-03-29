@@ -26,7 +26,7 @@ bool sign(int x){
 
 // Sprawdzenie, czy czesc wycinka/luku ograniczonego
 // katami alfa1, alfa2 lezy w danej cwiartce.
-bool isInFirstQuarter(fp_t alfa1, fp_t alfa2){
+bool isInFirstQuarter(fp_t alfa1, fp_t){
 	return alfa1 < 90.0f;
 }
 bool isInSecondQuarter(fp_t alfa1, fp_t alfa2){
@@ -35,19 +35,19 @@ bool isInSecondQuarter(fp_t alfa1, fp_t alfa2){
 bool isInThirdQuarter(fp_t alfa1, fp_t alfa2){
 	return alfa1 < 270.0f && (alfa1 >= 180.0f || alfa2 >= 180.0f);
 }
-bool isInFourthQuarter(fp_t alfa1, fp_t alfa2){
+bool isInFourthQuarter(fp_t, fp_t alfa2){
 	return alfa2 >= 270.0f;
 }
 
 // Sprawdza, czy x nalezy do przedzialu [min, max].
 // Wlasnosc: dla dowolnego a,x: in(a, x, a) -> false
-template<typename T> bool in(T min, T x, T max){
+template<typename T, typename U> bool in(T min, U x, T max){
 	return min <= x && x < max;
 }
 
 
 // Ogranicza wartosc x do wartosci z przedzialu [min, max].
-template<typename T> void limitTo(int min, T &x, int max){
+template<typename T, typename U> void limitTo(T min, U &x, T max){
 	if(x < min)
 		x = min;
 	else if(x > max)
@@ -56,6 +56,7 @@ template<typename T> void limitTo(int min, T &x, int max){
 
 // Reprezentacja punktu na bitmapie.
 struct Point{
+	Point() = default;
 	Point(int x, int y) : x(x), y(y) {}
 
 	int x = {0},
@@ -76,6 +77,9 @@ struct Colour{
 };
 
 //************************************************************
+
+// Oblicz wsp. x punktu (x, y) lezacego na odcinku AB.
+int linearInterpolation(Point A, Point B, int y);
 
 void safeDrawPoint(JiMP2::BMP &bitmap, Point P, Colour clr);
 void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour clr);
@@ -149,8 +153,11 @@ void arcSectorTest(){
 	for(int i=0; i<6; ++i)
 		drawArc(bmp, {150+100*i, 150}, r, 0, 50*(1+i), black);
 
-	for(int i=0; i<6; ++i)
-		drawCircularSector(bmp, {50+100*i, 250}, r, 30*i, 360-30*i, blue);
+	for(int i=0; i<8; ++i)
+		drawCircularSector(bmp, {50+2*r*i, 350}, r, 20*i, 360-20*i, blue);
+	
+	const int r1 = 70;
+	drawCircularSector(bmp, {w/2 - r1, h-r1}, r1, 95, 260, {200, 0, 0});
 
 	std::ofstream writer("arcsector.bmp", std::ofstream::binary);
 	writer << bmp;
@@ -194,6 +201,16 @@ void run(){
 	arcSectorTest();
 	ellipseTest();
 	rectangleTest();
+}
+
+//************************************************************
+
+int linearInterpolation(Point A, Point B, int y){
+	//if(A.x != B.x)
+	if(A.y != B.y)
+		return B.x + (y-B.y)*(A.x-B.x)/(A.y-B.y);
+	else
+		return B.x;
 }
 
 //************************************************************
@@ -312,7 +329,7 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 		err = dx - (r << 1);
 
 	struct{
-		uint16_t y_min = {0}, y_max = {0};
+		int y_min = {0}, y_max = {0};
 	} q1, q2, q3, q4;
 	
 	// I cwiartka.
@@ -377,7 +394,6 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 //************************************************************
 
 // Wycinek kola.
-// Naiwna implementacja.
 void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	fp_t alfa1, fp_t alfa2, Colour clr){
 	
@@ -386,12 +402,54 @@ void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	fp_t a1 = deg2Rad(alfa1);
 	fp_t a2 = deg2Rad(alfa2);
 
-	Point P1(S.x + r*cos(a1), S.y - r*sin(a1));
-	Point P2(S.x + r*cos(a2), S.y - r*sin(a2));
+	#ifdef DEBUG
+	safeDrawPoint(bitmap, S, {0xff, 0, 0});
+	drawCircle(bitmap, S, r, {0xaa, 0xaa, 0xaa});
+	#endif
 
-	drawLine(bitmap, S, P1, clr);
-	drawLine(bitmap, S, P2, clr);
-	drawArc(bitmap, S, r, alfa1, alfa2, clr);
+	int y;
+
+	if(isInFirstQuarter(alfa1, alfa2)){
+		Point U(S.x + r*cos(a1), S.y - r*sin(a1));
+		Point V((alfa2 < 90.0f) ? (S.x + r*cos(a2)) : S.x,
+		        (alfa2 < 90.0f) ? (S.y - r*sin(a2)) : (S.y - r));
+		// V.x < U.x; V.y < U.y
+		
+		for(y = V.y; y <= U.y; ++y){
+			Point P(linearInterpolation(S, V, y), y);
+			Point Q(S.x + sqrt(r*r - squared(y-S.y)), y);
+			drawLine(bitmap, P, Q, clr);
+		}
+
+		for(; y <= S.y; ++y){
+			Point P(linearInterpolation(S, V, y), y);
+			Point R(linearInterpolation(S, U, y), y);
+			drawLine(bitmap, P, R, clr);
+		}
+	}
+	if(isInSecondQuarter(alfa1, alfa2)){
+		Point U(
+			(alfa1 >= 90.0f) ? (S.x + r*cos(a1)) : S.x,
+			(alfa1 >= 90.0f) ? (S.y - r*sin(a1)) : (S.y-r)
+		);
+		Point V(
+			(alfa2 < 180.0f) ? (S.x + r*cos(a2)) : (S.x-r),
+			(alfa2 < 180.0f) ? (S.x - r*sin(a2)) : S.y
+		);
+		// V.x < U.x; V.y > U.y
+
+		for(y = U.y; y <= V.y; ++y){
+			Point P(linearInterpolation(U, S, y), y);
+			Point Q(S.x - sqrt(r*r - squared(y-S.y)), y);
+			drawLine(bitmap, P, Q, clr);
+		}
+
+		for(; y <= S.y; ++y){
+			Point P(linearInterpolation(S, V, y), y);
+			Point R(linearInterpolation(S, U, y), y);
+			drawLine(bitmap, P, R, clr);
+		}
+	}
 }
 
 //************************************************************
