@@ -24,6 +24,21 @@ bool sign(int x){
 	return x ? (x > 0 ? 1 : -1) : 0;
 }
 
+// Sprawdzenie, czy czesc wycinka/luku ograniczonego
+// katami alfa1, alfa2 lezy w danej cwiartce.
+bool isInFirstQuarter(fp_t alfa1, fp_t alfa2){
+	return alfa1 < 90.0f;
+}
+bool isInSecondQuarter(fp_t alfa1, fp_t alfa2){
+	return alfa1 < 180.0f && (alfa1 >= 90.0f || alfa2 >= 90.0f);
+}
+bool isInThirdQuarter(fp_t alfa1, fp_t alfa2){
+	return alfa1 < 270.0f && (alfa1 >= 180.0f || alfa2 >= 180.0f);
+}
+bool isInFourthQuarter(fp_t alfa1, fp_t alfa2){
+	return alfa2 >= 270.0f;
+}
+
 // Sprawdza, czy x nalezy do przedzialu [min, max].
 // Wlasnosc: dla dowolnego a,x: in(a, x, a) -> false
 template<typename T> bool in(T min, T x, T max){
@@ -71,6 +86,7 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	fp_t alfa1, fp_t alfa2, Colour clr);
 void drawEllipse(JiMP2::BMP &bitmap, Point S, uint16_t a, uint16_t b, Colour clr);
+void drawRectangle(JiMP2::BMP &bitmap, Point A, Point B, Colour clr);
 
 //************************************************************
 
@@ -118,10 +134,10 @@ void circleDiskTest(){
 	writer << bmp;
 }
 
-void arcTest(){
+void arcSectorTest(){
 	const uint16_t w = 800, h = 600;
 	JiMP2::BMP bmp(w, h);
-	Colour black{0, 0, 0};
+	Colour black{0, 0, 0}, blue{64, 64, 128};
 
 	int r = 50;
 	for(int i=0; i<6; ++i)
@@ -133,30 +149,57 @@ void arcTest(){
 	for(int i=0; i<6; ++i)
 		drawArc(bmp, {150+100*i, 150}, r, 0, 50*(1+i), black);
 
-	std::ofstream writer("arc.bmp", std::ofstream::binary);
+	for(int i=0; i<6; ++i)
+		drawCircularSector(bmp, {50+100*i, 250}, r, 30*i, 360-30*i, blue);
+
+	std::ofstream writer("arcsector.bmp", std::ofstream::binary);
+	writer << bmp;
+}
+
+void ellipseTest(){
+	const uint16_t w = 800, h = 600;
+	JiMP2::BMP bmp(w, h);
+
+	const Point mid{w/2, h/2};
+
+	drawEllipse(bmp, mid, w/2, h/2, {0, 0, 0});
+	drawEllipse(bmp, mid, w/3, h/3, {50, 50, 50});
+	drawEllipse(bmp, mid, w/4, h/4, {100, 100, 100});
+	drawEllipse(bmp, mid, w/6, h/6, {150, 150, 150});
+	drawEllipse(bmp, mid, w/9, h/9, {200, 200, 200});
+
+	drawEllipse(bmp, mid, 100, 100, {192, 0, 0});
+	drawEllipse(bmp, mid, 100, 200, {192, 0, 0});
+	drawEllipse(bmp, mid, 100, 400, {192, 0, 0});
+
+	std::ofstream writer("ellipse.bmp", std::ofstream::binary);
+	writer << bmp;
+}
+
+void rectangleTest(){
+	const uint16_t w = 800, h = 600;
+	JiMP2::BMP bmp(w, h);
+
+	drawRectangle(bmp, {220, 220}, {120, 420}, {0, 0, 0});
+	drawRectangle(bmp, {-100, -100}, {300, 200}, {0, 0, 192});	
+	drawRectangle(bmp, {600, 500}, {300, 200}, {0, 168, 0});	
+
+	std::ofstream writer("rectangle.bmp", std::ofstream::binary);
 	writer << bmp;
 }
 
 void run(){
-	// Linie.
 	lineTest();
-
-	// Okrag i kolo.
 	circleDiskTest();
-
-	// Luk.
-	arcTest();
-
-	// Wycinek kola.
-
-	// Elipsa.
-	//drawEllipse(bmp, {400, 200}, 150, 120, {50, 50, 50});
+	arcSectorTest();
+	ellipseTest();
+	rectangleTest();
 }
 
 //************************************************************
 
 void safeDrawPoint(JiMP2::BMP &bitmap, Point P, Colour clr){
-	if(in(0, P.x, bitmap.getWidth()-1) && in(0, P.y, bitmap.getHeight()-1))
+	if(in(0, P.x, (int)bitmap.getWidth()+1) && in(0, P.y, (int)bitmap.getHeight()+1))
 		bitmap.setPixel(P.x, P.y, clr.r, clr.g, clr.b);
 }
 
@@ -273,22 +316,22 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	} q1, q2, q3, q4;
 	
 	// I cwiartka.
-	if(alfa1 < 90.0f){
+	if(isInFirstQuarter(alfa1, alfa2)){
 		q1.y_max = S.y - r*sin(a1);
 		q1.y_min = (alfa2 < 90.0f) ? (S.y - r*sin(a2)) : (S.y - r);
 	}
 	// II cwiartka.
-	if(in(90.0f, alfa1, 180.0f) || (alfa1 < 90.0f && alfa2 >= 90.0f)){
+	if(isInSecondQuarter(alfa1, alfa2)){
 		q2.y_max = (alfa2 < 180.0f) ? (S.y - r*sin(a2)) : S.y;
 		q2.y_min = (alfa1 > 90.0f) ? (S.y - r*sin(a1)) : (S.y - r);
 	}
 	// III cwiartka.
-	if(in(180.0f, alfa1, 270.0f) || (alfa1 < 180.0f && alfa2 >= 180.0f)){
+	if(isInThirdQuarter(alfa1, alfa2)){
 		q3.y_max = (alfa2 < 270.0f) ? (S.y - r*sin(a2)) : (S.y + r);
 		q3.y_min = (alfa1 > 180.0f) ? (S.y - r*sin(a1)) : S.y;
 	}
 	// IV cwiartka.
-	if(alfa2 > 270.0f){
+	if(isInFourthQuarter(alfa1, alfa2)){
 		q4.y_max = (alfa1 > 270.0f) ? (S.y - r*sin(a1)) : (S.y + r);
 		q4.y_min = S.y - r*sin(a2);
 	}
@@ -387,6 +430,17 @@ void drawEllipse(JiMP2::BMP &bitmap, Point S, uint16_t a, uint16_t b, Colour clr
 			p += 2*x*squared(b) - squared(a)*(2*y + 1);
 		}
 	}
+}
+
+//************************************************************
+
+// Prostokat.
+// Naiwna implementacja.
+void drawRectangle(JiMP2::BMP &bitmap, Point A, Point B, Colour clr){
+	drawLine(bitmap, A, {B.x, A.y}, clr);
+	drawLine(bitmap, A, {A.x, B.y}, clr);
+	drawLine(bitmap, {B.x, A.y}, B, clr);
+	drawLine(bitmap, {A.x, B.y}, B, clr);
 }
 
 //************************************************************
