@@ -80,41 +80,20 @@ const uint16_t imgHeight = 600;
 void lineTest(){
 	JiMP2::BMP bmp(imgWidth, imgHeight);
 
-	const int A = 325;
-	const int D = 25;
-	const int S = 375;
 	const Colour clr{0, 0, 128};
 	const Colour clr1{192, 32, 32};
+	const int S = 200;
+	const int mx = imgWidth/2;
+	const int my = imgHeight/2;
+	const Point center = {mx, my};
 
-	drawLine(bmp, {A, A}, {A, A+S}, clr);
-	drawLine(bmp, {A, A}, {A+D, A+S}, clr);
-	drawLine(bmp, {A, A}, {A+3*D, A+S}, clr);
-	drawLine(bmp, {A, A}, {A+5*D, A+S}, clr);
-	drawLine(bmp, {A, A}, {A+11*D, A+S}, clr);
-	drawLine(bmp, {A, A}, {A+15*D, A+S/2}, clr);
-	drawLine(bmp, {A, A}, {A+15*D, A+S/8}, clr);
-	drawLine(bmp, {A, A}, {A+15*D, A}, clr);
+	drawLine(bmp, center, {mx+S, my}, clr);
+	drawLine(bmp, center, {mx, my-S}, clr);
+	drawLine(bmp, center, {mx-S, my}, clr);
+	drawLine(bmp, center, {mx, my+S}, clr);
 
-	drawLine(bmp, {A, A}, {A+15*D, A-S/4}, clr);
-	drawLine(bmp, {A, A}, {A+15*D, A-S}, clr);
-	drawLine(bmp, {A, A}, {A+11*D, A-S}, clr);
-	drawLine(bmp, {A, A}, {A+5*D, A-S}, clr);
-	drawLine(bmp, {A, A}, {A+3*D, A-S}, clr);
-	drawLine(bmp, {A, A}, {A, A-S}, clr);
-
-	drawLine(bmp, {A, A}, {A-3*D, A-S}, clr);
-	drawLine(bmp, {A, A}, {A-S, A-S}, clr);
-	drawLine(bmp, {A, A}, {A-S, A}, clr);
-	
-	drawLine(bmp, {A, A}, {A-S, A+S}, clr);
-	drawLine(bmp, {A, A}, {A-S, A+S/2}, clr);
-	drawLine(bmp, {A, A}, {A-S, A+S/4}, clr);
-	drawLine(bmp, {A, A}, {A-3*D, A+S}, clr);
-	drawLine(bmp, {A, A}, {A-D, A+S}, clr);
-
-	drawLine(bmp, {-50, 50}, {bmp.getWidth()+50, 50}, clr1);
-	drawLine(bmp, {50, -50}, {50, bmp.getHeight()+50}, clr1);
-	drawLine(bmp, {-30, -50}, {bmp.getWidth()-30, bmp.getHeight()+50}, clr1);
+	for(float a = 25.0f; a < 360.0f; a += 25.0f)
+		drawLine(bmp, center, {mx + S*cos(deg2Rad(a)), my + S*sin(deg2Rad(a))}, clr);
 
 	std::ofstream writer("line.bmp", std::ofstream::binary);
 	writer << bmp;
@@ -168,7 +147,6 @@ void run(){
 	arcTest();
 
 	// Wycinek kola.
-	//drawCircularSector(bmp, {450, 300}, 75, 30, 330, {255, 60, 60});
 
 	// Elipsa.
 	//drawEllipse(bmp, {400, 200}, 150, 120, {50, 50, 50});
