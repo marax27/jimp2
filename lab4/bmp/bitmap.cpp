@@ -93,7 +93,7 @@ void lineTest(){
 	drawLine(bmp, center, {mx, my+S}, clr);
 
 	for(float a = 25.0f; a < 360.0f; a += 25.0f)
-		drawLine(bmp, center, {mx + S*cos(deg2Rad(a)), my + S*sin(deg2Rad(a))}, clr);
+		drawLine(bmp, center, Point(mx + S*cos(deg2Rad(a)), my + S*sin(deg2Rad(a))), clr);
 
 	std::ofstream writer("line.bmp", std::ofstream::binary);
 	writer << bmp;
@@ -162,38 +162,29 @@ void safeDrawPoint(JiMP2::BMP &bitmap, Point P, Colour clr){
 //************************************************************
 
 // Linia.
-// http://csourcecodes.blogspot.com/2016/06/bresenhams-line-drawing-algorithm-generalized-c-program.html?m=1
-void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour clr){
-	int x = A.x,
-	    y = A.y,
-		dx = abs(B.x - A.x),
-		dy = abs(B.y - A.y),
-		s1 = sign(B.x - A.x),
-		s2 = sign(B.y - A.y),
-	    swap = 0;
-
-	safeDrawPoint(bitmap, A, clr);
-	if(dy > dx){
-		std::swap(dx, dy);
-		swap = 1;
-	}
-	int d = 2*dy - dx;
-	for(int i = 0; i < dx; ++i){
-		safeDrawPoint(bitmap, {x, y}, clr);
-		while(d >= 0){
-			if(swap)
-				x += s1;
-			else
-				y += s2;
-			d -= 2*dx;
+// W oparciu o algorytm Bresenhama.
+// https://gist.github.com/bert/1085538
+void drawLine (JiMP2::BMP &bitmap, Point A, Point B, Colour clr)
+{
+	int dx =  abs (B.x - A.x), sx = A.x < B.x ? 1 : -1,
+	    dy = -abs (B.y - A.y), sy = A.y < B.y ? 1 : -1; 
+	int err = dx + dy,
+	    e2;
+ 
+	while(true){
+		safeDrawPoint(bitmap, A, clr);
+		if(A.x == B.x && A.y == B.y)
+			break;
+		e2 = 2*err;
+		if(e2 >= dy){
+			err += dy;
+			A.x += sx;
 		}
-		d += 2*dy;
-		if(swap)
-			y += s2;
-		else
-			x += s1;
+		if(e2 <= dx){
+			err += dx;
+			A.y += sy;
+		}
 	}
-	safeDrawPoint(bitmap, B, clr);
 }
 
 //************************************************************
