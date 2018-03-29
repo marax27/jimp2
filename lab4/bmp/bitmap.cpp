@@ -82,7 +82,7 @@ void lineTest(){
 
 	const Colour clr{0, 0, 128};
 	const Colour clr1{192, 32, 32};
-	const int S = 200;
+	const int S = 500;   //duza wartosc, by linie wykraczaly za bitmape
 	const int mx = imgWidth/2;
 	const int my = imgHeight/2;
 	const Point center = {mx, my};
@@ -112,6 +112,7 @@ void circleDiskTest(){
 		drawCircle(bmp, {3*r, -25*i}, r, c1);
 
 	drawDisk(bmp, {r, 3*r}, r, c1);
+	drawDisk(bmp, {r, 7*r}, 3*r, {0, 0, 0});
 
 	std::ofstream writer("circledisk.bmp", std::ofstream::binary);
 	writer << bmp;
@@ -358,10 +359,10 @@ void drawEllipse(JiMP2::BMP &bitmap, Point S, uint16_t a, uint16_t b, Colour clr
 	int p = squared(b) - squared(a)*b + squared(a)/4;
 
 	while(x*squared(b) < y*squared(a)){
-		bitmap.setPixel(S.x+x, S.y-y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-x, S.y+y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x+x, S.y+y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-x, S.y-y, clr.r, clr.g, clr.b);
+		safeDrawPoint(bitmap, {S.x+x, S.y-y}, clr);
+		safeDrawPoint(bitmap, {S.x-x, S.y+y}, clr);
+		safeDrawPoint(bitmap, {S.x+x, S.y+y}, clr);
+		safeDrawPoint(bitmap, {S.x-x, S.y-y}, clr);
 
 		++x;
 		if(p<0)
@@ -373,10 +374,10 @@ void drawEllipse(JiMP2::BMP &bitmap, Point S, uint16_t a, uint16_t b, Colour clr
 	}
 	p = squared((x + 0.5) * b) + squared((y - 1) * a) - squared(a*b);
 	while(y >= 0){
-		bitmap.setPixel(S.x+x, S.y-y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-x, S.y+y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x+x, S.y+y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-x, S.y-y, clr.r, clr.g, clr.b);
+		safeDrawPoint(bitmap, {S.x+x, S.y-y}, clr);
+		safeDrawPoint(bitmap, {S.x-x, S.y+y}, clr);
+		safeDrawPoint(bitmap, {S.x+x, S.y+y}, clr);
+		safeDrawPoint(bitmap, {S.x-x, S.y-y}, clr);
 
 		--y;
 		if(p > 0)
