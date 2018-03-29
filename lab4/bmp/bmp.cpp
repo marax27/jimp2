@@ -7,7 +7,6 @@
 using namespace std;
 
 void run();
-void testWycinkow();
 
 namespace JiMP2 {
 
@@ -93,8 +92,7 @@ int main() {
 
 	std::cout << "end." << std::endl;*/
 
-	//run();
-	testWycinkow();
+	run();
 
 	return 0;
 }

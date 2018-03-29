@@ -19,8 +19,17 @@ fp_t deg2Rad(fp_t degrees){
 	return degrees * M_PI / 180.0;
 }
 
+// Sprawdza, czy x nalezy do przedzialu [min, max].
 template<typename T> bool in(T min, T x, T max){
 	return min <= x && x <= max;
+}
+
+// Ogranicza wartosc x do wartosci z przedzialu [min, max].
+template<typename T> void limitTo(int min, T &x, int max){
+	if(x < min)
+		x = min;
+	else if(x > max)
+		x = max;
 }
 
 // Reprezentacja punktu na bitmapie.
@@ -37,6 +46,8 @@ struct Point{
 
 // Reprezentacja koloru RGB.
 struct Colour{
+	Colour(unsigned char r, unsigned char g, unsigned char b)
+		: r(r), g(g), b(b) {}
 	unsigned char r = {0},
 	              g = {0},
 	              b = {0};
@@ -56,64 +67,104 @@ void drawEllipse(JiMP2::BMP &bitmap, Point S, uint16_t a, uint16_t b, Colour clr
 
 //************************************************************
 
-void run(){
-	const uint16_t imgWidth = 800;
-	const uint16_t imgHeight = 600;
+const uint16_t imgWidth = 800;
+const uint16_t imgHeight = 600;
 
+void lineTest(){
 	JiMP2::BMP bmp(imgWidth, imgHeight);
 
-	// Linie.
-	drawLine(bmp, {5, 5}, {795, 595}, {255, 0, 0});
-	drawLine(bmp, {50, 200}, {50, 400}, {0, 120, 0});
-	drawLine(bmp, {300, 55}, {25, 55}, {0, 0, 255});
-	drawLine(bmp, {200, 200}, {650, 500}, {80, 80, 80});
+	const int A = 325;
+	const int D = 25;
+	const int S = 375;
+	const Colour clr{0, 0, 128};
+	const Colour clr1{192, 32, 32};
 
-	// Okrag.
-	drawCircle(bmp, {400, 400}, 200, {128, 0, 255});
+	drawLine(bmp, {A, A}, {A, A+S}, clr);
+	drawLine(bmp, {A, A}, {A+D, A+S}, clr);
+	drawLine(bmp, {A, A}, {A+3*D, A+S}, clr);
+	drawLine(bmp, {A, A}, {A+5*D, A+S}, clr);
+	drawLine(bmp, {A, A}, {A+11*D, A+S}, clr);
+	drawLine(bmp, {A, A}, {A+15*D, A+S/2}, clr);
+	drawLine(bmp, {A, A}, {A+15*D, A+S/8}, clr);
+	drawLine(bmp, {A, A}, {A+15*D, A}, clr);
 
-	// Kolo.
-	drawDisk(bmp, {400, 400}, 80, {60, 60, 60});
+	drawLine(bmp, {A, A}, {A+15*D, A-S/4}, clr);
+	drawLine(bmp, {A, A}, {A+15*D, A-S}, clr);
+	drawLine(bmp, {A, A}, {A+11*D, A-S}, clr);
+	drawLine(bmp, {A, A}, {A+5*D, A-S}, clr);
+	drawLine(bmp, {A, A}, {A+3*D, A-S}, clr);
+	drawLine(bmp, {A, A}, {A, A-S}, clr);
 
-	// Luk.
-	drawArc(bmp, {550, 120}, 75, 30, 330, {60, 60, 60});
+	drawLine(bmp, {A, A}, {A-3*D, A-S}, clr);
+	drawLine(bmp, {A, A}, {A-S, A-S}, clr);
+	drawLine(bmp, {A, A}, {A-S, A}, clr);
+	
+	drawLine(bmp, {A, A}, {A-S, A+S}, clr);
+	drawLine(bmp, {A, A}, {A-S, A+S/2}, clr);
+	drawLine(bmp, {A, A}, {A-S, A+S/4}, clr);
+	drawLine(bmp, {A, A}, {A-3*D, A+S}, clr);
+	drawLine(bmp, {A, A}, {A-D, A+S}, clr);
 
-	// Wycinek kola.
-	drawCircularSector(bmp, {450, 300}, 75, 30, 330, {255, 60, 60});
+	drawLine(bmp, {-50, 50}, {bmp.getWidth()+50, 50}, clr1);
+	drawLine(bmp, {50, -50}, {50, bmp.getHeight()+50}, clr1);
+	drawLine(bmp, {-30, -50}, {bmp.getWidth()-30, bmp.getHeight()+50}, clr1);
 
-	// Elipsa.
-	drawEllipse(bmp, {400, 400}, 140, 70, {50, 50, 50});
-
-	std::ofstream outfile("test.bmp", std::ofstream::binary);
-	outfile << bmp;
+	std::ofstream writer("line.bmp", std::ofstream::binary);
+	writer << bmp;
 }
 
-void testWycinkow(){
+void circleDiskTest(){
+	JiMP2::BMP bmp(imgWidth, imgHeight);
+
+	const int r = 100;
+	Colour c1{128, 0, 255};
+
+	drawCircle(bmp, {r, r}, r, c1);
+	drawCircle(bmp, {0, imgHeight}, r, c1);
+	drawCircle(bmp, {-5, imgHeight+5}, r, c1);
+	for(int i=0; i!=5; ++i)
+		drawCircle(bmp, {3*r, -25*i}, r, c1);
+
+	drawDisk(bmp, {r, 3*r}, r, c1);
+
+	std::ofstream writer("circledisk.bmp", std::ofstream::binary);
+	writer << bmp;
+}
+
+void arcTest(){
 	const uint16_t w = 800, h = 600;
 	JiMP2::BMP bmp(w, h);
-	const Colour black{0, 0, 0};
+	Colour black{0, 0, 0};
 
 	int r = 50;
-	drawArc(bmp, {50, 50}, r, 0, 360, black);
-	drawArc(bmp, {150, 50}, r, 30, 330, black);
-	drawArc(bmp, {250, 50}, r, 60, 300, black);
-	drawArc(bmp, {350, 50}, r, 90, 270, black);
-	drawArc(bmp, {450, 50}, r, 120, 240, black);
-	drawArc(bmp, {550, 50}, r, 150, 210, black);
+	for(int i=0; i<6; ++i)
+		drawArc(bmp, {50+100*i, 50}, r, 30*i, 360-30*i, black);
 
-	drawArc(bmp, {50, 150}, r, 30, 60, black);
-	drawArc(bmp, {50, 150}, r, 120, 150, black);
-	drawArc(bmp, {50, 150}, r, 210, 240, black);
-	drawArc(bmp, {50, 150}, r, 300, 330, black);
+	for(int i=0; i<4; ++i)
+		drawArc(bmp, {50, 150}, r, 30+90*i, 60+90*i, black);
 
-	drawArc(bmp, {150, 150}, r, 0, 30, black);
-	drawArc(bmp, {250, 150}, r, 0, 60, black);
-	drawArc(bmp, {350, 150}, r, 0, 90, black);
-	drawArc(bmp, {450, 150}, r, 0, 120, black);
-	drawArc(bmp, {550, 150}, r, 0, 150, black);
-	drawArc(bmp, {650, 150}, r, 0, 180, black);
+	for(int i=0; i<6; ++i)
+		drawArc(bmp, {150+100*i, 150}, r, 0, 30*(1+i), black);
 
-	std::ofstream writer("wycinki.bmp", std::ofstream::binary);
+	std::ofstream writer("arc.bmp", std::ofstream::binary);
 	writer << bmp;
+}
+
+void run(){
+	// Linie.
+	lineTest();
+
+	// Okrag i kolo.
+	circleDiskTest();
+
+	// Luk.
+	arcTest();
+
+	// Wycinek kola.
+	//drawCircularSector(bmp, {450, 300}, 75, 30, 330, {255, 60, 60});
+
+	// Elipsa.
+	//drawEllipse(bmp, {400, 200}, 150, 120, {50, 50, 50});
 }
 
 //************************************************************
@@ -134,12 +185,12 @@ void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour clr){
 		     delta_y = B.y - A.y;
 		fp_t delta_err = fabs(delta_y / delta_x);
 		fp_t err = 0.0;
-		uint16_t y = A.y;
-		uint16_t left_x = A.x < B.x ? A.x : B.x,
-		         right_x = A.x > B.x ? A.x : B.x;
+		int y = A.y;
+		int left_x = std::min(A.x, B.x),
+		    right_x = std::max(A.x, B.x);
 
-		for(uint16_t x = left_x; x <= right_x; ++x){
-			bitmap.setPixel(x, y, clr.r, clr.g, clr.b);
+		for(int x = left_x; x <= right_x; ++x){
+			safeDrawPoint(bitmap, {x, y}, clr);
 			err += delta_err;
 			while(err >= 0.5){
 				y += delta_y ? (delta_y > 0.0 ? 1 : -1) : 0;
@@ -148,9 +199,13 @@ void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour clr){
 		}
 	}
 	else{
-		// Vertical line.
-		uint16_t top_y = A.y < B.y ? A.y : B.y,
-		         bottom_y = A.y > B.y ? A.y : B.y;
+		// Linia pionowa.
+		int top_y = std::min(A.y, B.y),
+		    bottom_y = std::max(A.y, B.y);
+		
+		// Sprawdz, czy zakres y nie wykracza poza bitmape.
+		limitTo(0, top_y, bitmap.getHeight());
+		limitTo(0, bottom_y, bitmap.getHeight());
 
 		for(uint16_t y = top_y; y <= bottom_y; ++y)
 			bitmap.setPixel(A.x, y, clr.r, clr.g, clr.b);
@@ -169,14 +224,14 @@ void drawCircle(JiMP2::BMP &bitmap, Point S, uint16_t r, Colour clr){
 	    err = dx - (r << 1);
 	
 	while(x >= y){
-		bitmap.setPixel(S.x+x, S.y+y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x+y, S.y+x, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-y, S.y+x, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-x, S.y+y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-x, S.y-y, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x-y, S.y-x, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x+y, S.y-x, clr.r, clr.g, clr.b);
-		bitmap.setPixel(S.x+x, S.y-y, clr.r, clr.g, clr.b);
+		safeDrawPoint(bitmap, {S.x+x, S.y+y}, clr);
+		safeDrawPoint(bitmap, {S.x+y, S.y+x}, clr);
+		safeDrawPoint(bitmap, {S.x-y, S.y+x}, clr);
+		safeDrawPoint(bitmap, {S.x-x, S.y+y}, clr);
+		safeDrawPoint(bitmap, {S.x-x, S.y-y}, clr);
+		safeDrawPoint(bitmap, {S.x-y, S.y-x}, clr);
+		safeDrawPoint(bitmap, {S.x+y, S.y-x}, clr);
+		safeDrawPoint(bitmap, {S.x+x, S.y-y}, clr);
 
 		if(err <= 0){
 			++y;
