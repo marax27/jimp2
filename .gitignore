@@ -3,3 +3,7 @@ content/
 .vscode/
 
 a.out
+
+*.bmp
+
+makefile
