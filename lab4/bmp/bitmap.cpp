@@ -19,10 +19,17 @@ fp_t deg2Rad(fp_t degrees){
 	return degrees * M_PI / 180.0;
 }
 
-// Sprawdza, czy x nalezy do przedzialu [min, max].
-template<typename T> bool in(T min, T x, T max){
-	return min <= x && x <= max;
+// Funkcja znaku.
+bool sign(int x){
+	return x ? (x > 0 ? 1 : -1) : 0;
 }
+
+// Sprawdza, czy x nalezy do przedzialu [min, max].
+// Wlasnosc: dla dowolnego a,x: in(a, x, a) -> false
+template<typename T> bool in(T min, T x, T max){
+	return min <= x && x < max;
+}
+
 
 // Ogranicza wartosc x do wartosci z przedzialu [min, max].
 template<typename T> void limitTo(int min, T &x, int max){
@@ -177,39 +184,38 @@ void safeDrawPoint(JiMP2::BMP &bitmap, Point P, Colour clr){
 //************************************************************
 
 // Linia.
-// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+// http://csourcecodes.blogspot.com/2016/06/bresenhams-line-drawing-algorithm-generalized-c-program.html?m=1
 void drawLine(JiMP2::BMP &bitmap, Point A, Point B, Colour clr){
-	if(A.x != B.x){
-		// Non-vertical line.
-		fp_t delta_x = B.x - A.x,
-		     delta_y = B.y - A.y;
-		fp_t delta_err = fabs(delta_y / delta_x);
-		fp_t err = 0.0;
-		int y = A.y;
-		int left_x = std::min(A.x, B.x),
-		    right_x = std::max(A.x, B.x);
+	int x = A.x,
+	    y = A.y,
+		dx = abs(B.x - A.x),
+		dy = abs(B.y - A.y),
+		s1 = sign(B.x - A.x),
+		s2 = sign(B.y - A.y),
+	    swap = 0;
 
-		for(int x = left_x; x <= right_x; ++x){
-			safeDrawPoint(bitmap, {x, y}, clr);
-			err += delta_err;
-			while(err >= 0.5){
-				y += delta_y ? (delta_y > 0.0 ? 1 : -1) : 0;
-				err -= 1.0;
-			}
+	safeDrawPoint(bitmap, A, clr);
+	if(dy > dx){
+		std::swap(dx, dy);
+		swap = 1;
+	}
+	int d = 2*dy - dx;
+	for(int i = 0; i < dx; ++i){
+		safeDrawPoint(bitmap, {x, y}, clr);
+		while(d >= 0){
+			if(swap)
+				x += s1;
+			else
+				y += s2;
+			d -= 2*dx;
 		}
+		d += 2*dy;
+		if(swap)
+			y += s2;
+		else
+			x += s1;
 	}
-	else{
-		// Linia pionowa.
-		int top_y = std::min(A.y, B.y),
-		    bottom_y = std::max(A.y, B.y);
-		
-		// Sprawdz, czy zakres y nie wykracza poza bitmape.
-		limitTo(0, top_y, bitmap.getHeight());
-		limitTo(0, bottom_y, bitmap.getHeight());
-
-		for(uint16_t y = top_y; y <= bottom_y; ++y)
-			bitmap.setPixel(A.x, y, clr.r, clr.g, clr.b);
-	}
+	safeDrawPoint(bitmap, B, clr);
 }
 
 //************************************************************
@@ -291,28 +297,56 @@ void drawArc(JiMP2::BMP &bitmap, Point S, uint16_t r,
 	int x = r-1,
 	    y = 0,
 		err = dx - (r << 1);
+
+	struct{
+		uint16_t y_min = {0}, y_max = {0};
+		void set(){
+			if(y_min > y_max)
+				std::swap(y_min, y_max);
+		}
+	} q1, q2, q3, q4;
 	
 	// I cwiartka.
 	if(alfa1 < 90.0){
-		uint16_t y_max = S.y - r*sin(a1),
-		         y_min = (alfa2 < 90.0) ? (S.y - r*sin(a2)) : (S.y - r);
+		q1.y_max = S.y - r*sin(a1);
+		q1.y_min = (alfa2 < 90.0) ? (S.y - r*sin(a2)) : (S.y - r);
+	}
+	// II cwiartka.
+	if(in(90.0f, alfa1, 180.0f) || (alfa1 < 90.0 && alfa2 >= 90.0)){
+		q2.y_min = (alfa1 > 90.0) ? (S.y - r*sin(a1)) : (S.y - r);
+		q2.y_max = (alfa2 < 180.0) ? (S.y - r*sin(a2)) : S.y;
+		q2.set();
+	}
+	printf("(%d, %d, %.2f, %.2f) gives (%d, %d)\n", 
+		S.x, S.y, alfa1, alfa2, q2.y_min, q2.y_max);
 
-		while(x >= y){
-			if(in(y_min, uint16_t(S.y-x), y_max))
-				bitmap.setPixel(S.x+y, S.y-x, clr.r, clr.g, clr.b);
-			if(in(y_min, uint16_t(S.y-y), y_max))
-				bitmap.setPixel(S.x+x, S.y-y, clr.r, clr.g, clr.b);
-			
-			if(err <= 0){
-				++y;
-				err += dy;
-				dy += 2;
-			}
-			if(err > 0){
-				--x;
-				dx += 2;
-				err += dx - (r << 1);
-			}
+	while(x >= y){
+		// I
+		if(in(q1.y_min, uint16_t(S.y-x), q1.y_max))
+			safeDrawPoint(bitmap, {S.x+y, S.y-x}, clr);
+		if(in(q1.y_min, uint16_t(S.y-y), q1.y_max))
+			safeDrawPoint(bitmap, {S.x+x, S.y-y}, clr);
+
+		// II
+		if(in(q2.y_min, uint16_t(S.y-y), q2.y_max))
+			safeDrawPoint(bitmap, {S.x-x, S.y-y}, clr);
+		if(in(q2.y_min, uint16_t(S.y-x), q2.y_max))
+			safeDrawPoint(bitmap, {S.x-y, S.y-x}, clr);
+
+		//safeDrawPoint(bitmap, {S.x+y, S.y+x}, clr);// I
+		//safeDrawPoint(bitmap, {S.x+x, S.y+y}, clr);// I
+		//safeDrawPoint(bitmap, {S.x-y, S.y+x}, clr);// I
+		//safeDrawPoint(bitmap, {S.x-x, S.y+y}, clr);// I
+
+		if(err <= 0){
+			++y;
+			err += dy;
+			dy += 2;
+		}
+		if(err > 0){
+			--x;
+			dx += 2;
+			err += dx - (r << 1);
 		}
 	}
 }
