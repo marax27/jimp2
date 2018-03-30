@@ -346,7 +346,7 @@ void drawCircularSector(JiMP2::BMP &bitmap, Point S, uint16_t r,
 		);
 		Point V(
 			(alfa2 < 180.0f) ? (S.x + r*cos(a2)) : (S.x-r),
-			(alfa2 < 180.0f) ? (S.x - r*sin(a2)) : S.y
+			(alfa2 < 180.0f) ? (S.y - r*sin(a2)) : S.y
 		);
 		// V.x < U.x; V.y > U.y
 
