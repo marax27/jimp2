@@ -58,6 +58,8 @@ public:
 
 	std::string asString() const;
 
+	BigInt abs() const;
+
 	//----------------------------------------
 	class BigIntException : public std::exception {};
 

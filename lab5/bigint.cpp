@@ -5,7 +5,7 @@
 #include <ctime>
 #include <cstdlib>
 
-#define DEBUG
+// #define DEBUG
 
 //*** Input & output *****************************************
 
@@ -60,35 +60,36 @@ bool BigInt::operator==(const BigInt &right) const{
 }
 
 bool BigInt::operator<(const BigInt &right) const{
-	if(length > right.length)
-		return false;
-	else if(length < right.length)
-		return true;
-
 	if(sign > right.sign)
 		return true;
 	else if(sign < right.sign)
 		return false;
-	
+
+	if(length > right.length)
+		return sign ? true : false;
+	else if(length < right.length)
+		return sign ? false : true;
+
 	// What is known:
 	// a,b > 0 || a,b < 0
 	// length(a) == length(b)
-	bool equality = true;
 	for(std::size_t i = 0; i != length; ++i){
+		auto d1 = data[length-i-1];
+		auto d2 = right.data[length-i-1];
 		if(sign){
-			if(data[i] < right.data[i])
+			if(d1 < d2)
 				return false;
-			else
-				equality &= (data[i] == right.data[i]);
+			else if(d1 > d2)
+				return true;
 		}
 		else{
-			if(data[i] > right.data[i])
+			if(d1 > d2)
 				return false;
-			else
-				equality &= (data[i] == right.data[i]);
+			else if(d1 < d2)
+				return true;
 		}
 	}
-	return true && !equality;
+	return false;  //they're equal
 }
 
 //************************************************************
@@ -100,7 +101,7 @@ BigInt BigInt::operator+(const BigInt &right) const{
 	// Compute a + b, where a*b > 0.
 
 	const BigInt *max_n, *min_n;
-	if(*this >= right){
+	if(this->abs() >= right.abs()){
 		max_n = this;
 		min_n = &right;
 	}
@@ -141,7 +142,7 @@ BigInt BigInt::operator-(const BigInt &right) const{
 
 	// Compute a - b, where a*b > 0.
 	const BigInt *max_n, *min_n;
-	if(*this >= right){
+	if(this->abs() >= right.abs()){
 		max_n = this;
 		min_n = &right;
 	}
@@ -185,7 +186,7 @@ BigInt BigInt::operator-(const BigInt &right) const{
 	delete[] above;
 	bool s;
 	if(sign)
-		s = (right <= *this) ? false : true;
+		s = (*this <= right) ? true : false;
 	else
 		s = (*this >= right) ? false : true;
 	BigInt result(tab, s, i);
@@ -211,6 +212,12 @@ std::string BigInt::asString() const{
 	for(std::size_t i = length; i > 0; --i)
 		result << (char)(data[i-1] + OFFSET);
 	return result.str();
+}
+
+BigInt BigInt::abs() const{
+	BigInt result(*this);
+	result.sign = 0;
+	return result;
 }
 
 //*** Private methods ****************************************
@@ -248,9 +255,11 @@ void BigInt::allocateDigits(std::size_t digits){
 }
 
 void BigInt::trimZeroes(){
-	Digit *p = data + length;
-	while(*(p--) == 0)
+	Digit *p = data + length - 1;
+	while(*p == 0 && p != data){
 		--length;
+		--p;
+	}
 }
 
 void BigInt::free(){
@@ -290,11 +299,32 @@ TEST_CASE("Test assignment operator", "operator="){
 	REQUIRE( a == b );
 }
 
+TEST_CASE("Relation a > b", "operator>"){
+	REQUIRE( BigInt(1234) > BigInt(99) );
+	REQUIRE( BigInt(1234) > BigInt(1099) );
+	REQUIRE( BigInt(100) > BigInt(-5421) );
+	REQUIRE( BigInt(-100) > BigInt(-125) );
+}
+
+TEST_CASE("Relation a < b", "operator<"){
+	REQUIRE( BigInt(99) < BigInt(1234) );
+	REQUIRE( BigInt(1099) < BigInt(1234) );
+	REQUIRE( BigInt(-100) < BigInt(12) );
+	REQUIRE( BigInt(-888) < BigInt(-4) );
+}
+
 TEST_CASE("Addition", "operator+"){
 	REQUIRE( BigInt(30) + BigInt(1) == 31 );
 	REQUIRE( BigInt(-30) + BigInt(1) == -29 );
 	REQUIRE( BigInt(30) + BigInt(-1) == 29 );
 	REQUIRE( BigInt(-30) + BigInt(-1) == -31 );
+}
+
+TEST_CASE("Substraction", "operator-"){
+	REQUIRE( BigInt(99) - BigInt(9) == BigInt(90) );
+	REQUIRE( BigInt(-99) - BigInt(9) == BigInt(-108) );
+	REQUIRE( BigInt(99) - BigInt(-9) == BigInt(108) );
+	REQUIRE( BigInt(-99) - BigInt(-9) == BigInt(-90) );
 }
 
 #else
@@ -305,6 +335,13 @@ int main(){
 	BigInt a(42000), a1("42000"),
 	       b(-7200), b1("-7200"),
 		   c(0),     c1("0");
+	
+	// BigInt u(208312), v(-235706);
+	// BigInt u(-99), v(-9);
+	// BigInt w(99), x(9);
+	// std::cout << u+v << std::endl;
+	// std::cout << w+x << std::endl;
+	// return 1;
 	
 	/*std::cout << "a: " << a << " | " << a1 << '\n'
 	          << "b: " << b << " | " << b1 << '\n'
