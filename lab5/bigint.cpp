@@ -178,11 +178,6 @@ BigInt BigInt::operator-(const BigInt &right) const{
 		++i;
 	}
 
-	// std::cerr << "op-(" << *this << ',' << right << ')';
-	// for(std::size_t i=0; i!=max_n->length; ++i)
-		// std::cerr << '[' << (int)tab[i] << ']';
-	// std::cerr << '\n';
-
 	delete[] above;
 	bool s;
 	if(sign)
@@ -190,6 +185,17 @@ BigInt BigInt::operator-(const BigInt &right) const{
 	else
 		s = (*this >= right) ? false : true;
 	BigInt result(tab, s, i);
+	return result;
+}
+
+//************************************************************
+
+// Naive implementation.
+BigInt BigInt::operator*(const BigInt &right) const{
+	BigInt result(0);
+	for(BigInt I = 0; I != right.abs(); I += 1)
+		result += *this;
+	result.sign = (sign ^ right.sign);
 	return result;
 }
 
@@ -327,27 +333,27 @@ TEST_CASE("Substraction", "operator-"){
 	REQUIRE( BigInt(-99) - BigInt(-9) == BigInt(-90) );
 }
 
+TEST_CASE("Multiplication", "operator*"){
+	BigInt a(12345), b(7099), c(12345*7099);
+	REQUIRE( a*b == c );
+	REQUIRE( b*(-a) == -c );
+	REQUIRE( (-a)*(-b) == c );
+	REQUIRE( (-a)*b == -c );
+}
+
 #else
 
 int main(){
 	srand(time(NULL));
 
-	BigInt a(42000), a1("42000"),
-	       b(-7200), b1("-7200"),
-		   c(0),     c1("0");
+	const int N = 500;
+	BigInt a = 1;
+	for(int i = 2; i != N+1; ++i)
+		a *= i;
+	std::cout << N << "! == " << a << '\n';
+	return 0;
 	
-	// BigInt u(208312), v(-235706);
-	// BigInt u(-99), v(-9);
-	// BigInt w(99), x(9);
-	// std::cout << u+v << std::endl;
-	// std::cout << w+x << std::endl;
-	// return 1;
-	
-	/*std::cout << "a: " << a << " | " << a1 << '\n'
-	          << "b: " << b << " | " << b1 << '\n'
-	          << "c: " << c << " | " << c1 << '\n';*/
-	
-	const int RANGE = 500000;
+	/*const int RANGE = 500000;
 	const int ITERATIONS = 1000000;
 	for(int i=0; i<ITERATIONS; ++i){
 		int a = rand() % (2*RANGE) - RANGE;
@@ -368,7 +374,7 @@ int main(){
 			std::cout << "\rProgress: " << (i*100.0f/ITERATIONS) << "%         ";
 		}
 	}
-	std::cout << "\nDone.\n";
+	std::cout << "\nDone.\n";*/
 }
 
 #endif

@@ -16,15 +16,16 @@ public:
 	explicit BigInt(const std::string &value);
 	~BigInt();
 
+	// Assignment.
 	BigInt& operator=(const BigInt &model);
 
+	// Comparing 2 BigInts.
 	bool operator==(const BigInt &right) const;
+	bool operator<(const BigInt &right) const;
+
 	bool operator!=(const BigInt &right) const{
 		return !(*this == right);
 	}
-
-	bool operator<(const BigInt &right) const;
-
 	bool operator>(const BigInt &right) const{
 		return !(*this < right) && (*this != right);
 	}
@@ -35,14 +36,31 @@ public:
 		return !(*this < right);
 	}
 
+	// Basic operators.
 	BigInt operator+(const BigInt &right) const;
 	BigInt operator-(const BigInt &right) const;
+	BigInt operator*(const BigInt &right) const;
 
 	BigInt operator-() const;
 	BigInt operator+() const{
 		return *this;
 	}
 
+	// Assignment+ operators.
+	BigInt& operator+=(const BigInt &right){
+		*this = *this + right;
+		return *this;
+	}
+	BigInt& operator-=(const BigInt &right){
+		*this = *this - right;
+		return *this;
+	}
+	BigInt& operator*=(const BigInt &right){
+		*this = *this * right;
+		return *this;
+	}
+
+	// Data access.
 	Digit& operator[](std::size_t index){
 		if(index <= length)
 			return data[index];
