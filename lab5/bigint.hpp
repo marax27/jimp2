@@ -40,10 +40,34 @@ public:
 	BigInt operator+(const BigInt &right) const;
 	BigInt operator-(const BigInt &right) const;
 	BigInt operator*(const BigInt &right) const;
+	BigInt operator/(const BigInt &right) const;
+	BigInt operator%(const BigInt &right) const;
 
 	BigInt operator-() const;
 	BigInt operator+() const{
 		return *this;
+	}
+
+	// Pre-
+	BigInt& operator++(){
+		*this = *this + 1;
+		return *this;
+	}
+	BigInt& operator--(){
+		*this = *this - 1;
+		return *this;
+	}
+
+	// Post-
+	BigInt operator++(int){
+		BigInt copy(*this);
+		++(*this);
+		return copy;
+	}
+	BigInt operator--(int){
+		BigInt copy(*this);
+		--(*this);
+		return copy;
 	}
 
 	// Assignment+ operators.
@@ -84,6 +108,7 @@ public:
 	class AllocationException : public BigIntException {};
 	class ConstructionException : public BigIntException {};
 	class OutOfRangeException : public BigIntException {};
+	class ZeroDivisionException : public BigIntException {};
 	//----------------------------------------
 
 private:
@@ -95,6 +120,12 @@ private:
 	void allocateDigits(std::size_t digits);
 	void trimZeroes();  // remove most significant 0-digits.
 	void free();
+	void ensurePositiveZero();  //handle -0
+
+	// Integer division - algorithm guesses the result.
+	// Limited to 1-digit results.
+	// Algorithm assumes treats numbers as non-negative.
+	static Digit divint(BigInt a, BigInt b);
 
 	// Private constructor; takes ownership over *data.
 	BigInt(Digit *data, bool sign, std::size_t length)
@@ -102,3 +133,5 @@ private:
 			trimZeroes();
 		}
 };
+
+BigInt operator*(long left, const BigInt &right);

@@ -14,6 +14,13 @@ std::ostream& operator<<(std::ostream &out, const BigInt &right){
 	return out;
 }
 
+std::istream& operator>>(std::istream &in, BigInt &right){
+	std::string s;
+	in >> s;
+	right = BigInt(s);
+	return in;
+}
+
 //*** Constructors & destructor ******************************
 
 BigInt::BigInt(long value){
@@ -193,10 +200,61 @@ BigInt BigInt::operator-(const BigInt &right) const{
 // Naive implementation.
 BigInt BigInt::operator*(const BigInt &right) const{
 	BigInt result(0);
-	for(BigInt I = 0; I != right.abs(); I += 1)
+	BigInt rabs = right.abs();
+	for(BigInt I = 0; I != rabs; I += 1)
 		result += *this;
 	result.sign = (sign ^ right.sign);
 	return result;
+}
+
+//************************************************************
+
+BigInt BigInt::operator/(const BigInt &right) const{
+	BigInt result = *this;
+	BigInt x = 0;
+
+	for(std::size_t i = this->length; i > 0; --i){
+		x = 10*x + this->data[i-1];
+		Digit d = divint(x, right);
+		result[i-1] = d;
+		x -= right.abs()*d;
+	}
+
+	result.trimZeroes();
+	result.sign = (sign ^ right.sign);
+	result.ensurePositiveZero();
+	return result;
+}
+
+//************************************************************
+
+BigInt BigInt::operator%(const BigInt &right) const{
+	// Note: a % b == -[(-a) % (-b)]
+	if(right == 0)
+		throw ZeroDivisionException();
+	
+	BigInt a = *this;
+	BigInt b = right.abs();
+	bool flag = false;
+
+	if(right.sign){
+		// a % (-b) == -[(-a) % b]
+		a.sign = !a.sign;
+		b.sign = false;
+		flag = true;
+	}
+	
+	if(a.sign){
+		while(a < 0)
+			a += b;
+	}
+	else{
+		while(a >= b)
+			a -= b;
+	}
+
+	a.sign = flag;
+	return a;
 }
 
 //************************************************************
@@ -206,6 +264,12 @@ BigInt BigInt::operator-() const{
 	if(result != 0)
 		result.sign = !sign;
 	return result;
+}
+
+//************************************************************
+
+BigInt operator*(long left, const BigInt &right){
+	return right * left;
 }
 
 //*** Public methods *****************************************
@@ -271,6 +335,29 @@ void BigInt::trimZeroes(){
 void BigInt::free(){
 	delete[] data;
 	length = 0;
+}
+
+void BigInt::ensurePositiveZero(){
+	if(length == 1 && sign && data[0] == 0)
+		sign = false;
+}
+
+BigInt::Digit BigInt::divint(BigInt a, BigInt b){
+	if(b == 0)
+		throw ZeroDivisionException();
+
+	a = a.abs();
+	b = b.abs();
+	if(a < b)
+		return 0;
+	else if(a == b)
+		return 1;
+	Digit result = 0;
+	do{
+		a -= b;
+		++result;
+	}while(a >= b);
+	return result;
 }
 
 //*** Unit testing *******************************************
@@ -341,17 +428,67 @@ TEST_CASE("Multiplication", "operator*"){
 	REQUIRE( (-a)*b == -c );
 }
 
+TEST_CASE("Division", "operator/"){
+	REQUIRE( BigInt(256) / BigInt(4) == 64 );
+	REQUIRE( BigInt(-256) / BigInt(4) == -64 );
+	REQUIRE( BigInt(256) / BigInt(-4) == -64 );
+	REQUIRE( BigInt(-256) / BigInt(-4) == 64 );
+}
+
+TEST_CASE("Modulus", "operator%"){
+	REQUIRE( BigInt(17) % BigInt(8) == 1 );
+	REQUIRE( BigInt(-17) % BigInt(8) == 7 );
+	REQUIRE( BigInt(17) % BigInt(-8) == -7 );
+	REQUIRE( BigInt(-17) % BigInt(-8) == -1 );
+}
+
+
+/*TEST_CASE("divint", "divint()"){
+	REQUIRE( BigInt::divint(36, 6) == 6 );
+	REQUIRE( BigInt::divint(37, 6) == 6 );
+	REQUIRE( BigInt::divint(41, 6) == 6 );
+	REQUIRE( BigInt::divint(42, 6) == 7 );
+
+	REQUIRE( BigInt::divint(13, 13) == 1 );
+	REQUIRE( BigInt::divint(8, 13) == 0 );
+	REQUIRE( BigInt::divint(0, 5) == 0 );
+	
+	REQUIRE_THROWS_AS( BigInt::divint(1, 0), BigInt::ZeroDivisionException );
+	REQUIRE_THROWS_AS( BigInt::divint(0, 0), BigInt::ZeroDivisionException );
+}*/
+
 #else
 
 int main(){
 	srand(time(NULL));
 
-	const int N = 500;
-	BigInt a = 1;
-	for(int i = 2; i != N+1; ++i)
-		a *= i;
-	std::cout << N << "! == " << a << '\n';
-	return 0;
+	while(true){
+		BigInt a(0), b(0);
+		char operation;
+		std::cout << ">>> ";
+		std::cin >> a >> operation >> b;
+
+		switch(operation){
+		case '+':
+			std::cout << a << " + " << b << " = " << a+b;
+			break;
+		case '-':
+			std::cout << a << " - " << b << " = " << a-b;
+			break;
+		case '*':
+			std::cout << a << " * " << b << " = " << a*b;
+			break;
+		case '/':
+			std::cout << a << " / " << b << " = " << a/b << "(mod " << a%b << ')';
+			break;
+		case '%':
+			std::cout << a << " % " << b << " = " << a%b;
+			break;
+		default:
+			std::cout << "[Error]";
+		}
+		std::cout << std::endl;
+	}
 	
 	/*const int RANGE = 500000;
 	const int ITERATIONS = 1000000;
@@ -361,12 +498,18 @@ int main(){
 		
 		BigInt p = BigInt(a)+BigInt(b);
 		BigInt m = BigInt(a)-BigInt(b);
+		BigInt d = b ? BigInt(a)/BigInt(b) : 0;
+
 		if(p != a+b){
 			std::cerr << "Err: "<<a<<" + "<<b<<" != "<< p << '\n';
 			break;
 		}
 		if(m != a-b){
 			std::cerr << "Err: "<<a<<" - "<<b<<" != "<< m << '\n';
+			break;
+		}
+		if(b && d != a/b){
+			std::cerr << "Err: "<<a<<" / "<<b<<" != "<< d << '\n';
 			break;
 		}
 
