@@ -83,6 +83,14 @@ public:
 		*this = *this * right;
 		return *this;
 	}
+	BigInt& operator/=(const BigInt &right){
+		*this = *this / right;
+		return *this;
+	}
+	BigInt& operator%=(const BigInt &right){
+		*this = *this % right;
+		return *this;
+	}
 
 	// Data access.
 	Digit& operator[](std::size_t index){

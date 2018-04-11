@@ -2,10 +2,6 @@
 #include <cstring>
 #include <sstream>
 #include <iostream>
-#include <ctime>
-#include <cstdlib>
-
-// #define DEBUG
 
 //*** Input & output *****************************************
 
@@ -197,17 +193,50 @@ BigInt BigInt::operator-(const BigInt &right) const{
 
 //************************************************************
 
-// Naive implementation.
 BigInt BigInt::operator*(const BigInt &right) const{
-	BigInt result(0);
 	if(*this == 0 || right == 0)
-		return result;
-		
-	BigInt rabs = right.abs();
-	for(BigInt I = 0; I != rabs; I += 1)
-		result += *this;
-	if(result != 0)
-		result.sign = (sign ^ right.sign);
+		return BigInt(0);
+	
+	const BigInt *greater = (abs() > right.abs() ? this : &right);
+	const BigInt *less = (abs() <= right.abs() ? this : &right);
+	std::size_t len = length + right.length;
+
+	char *result_data = new char[len]();
+	char *mid_data = new char[len * less->length]();
+	char sh = 0;
+
+	for(std::size_t i = 0; i != less->length; ++i){
+		for(std::size_t j = 0; j != greater->length; ++j){
+			std::size_t idx = j+i + i*len;
+			mid_data[idx] = greater->data[j] * less->data[i] + sh;
+			if(mid_data[idx] > 9){
+				char v = mid_data[idx] % 10;
+				sh = (mid_data[idx] - v) / 10;
+				mid_data[idx] = v;
+			}
+			else //if(j+1 != greater->length)
+				sh = 0;
+		}
+		mid_data[greater->length+i + i*len] = sh;
+		sh = 0;
+	}
+
+	for(std::size_t i = 0; i != len; ++i){
+		result_data[i] = sh;
+		sh = 0;
+		for(std::size_t j = 0; j != less->length; ++j)
+			result_data[i] += mid_data[i + j*len];
+
+		if(result_data[i] > 9){
+			char v = result_data[i] % 10;
+			sh = (result_data[i] - v) / 10;
+			result_data[i] = v;
+		}
+	}
+
+	BigInt result(result_data, sign ^ right.sign, length + right.length);
+	result.trimZeroes();
+	delete[] mid_data;
 	return result;
 }
 
@@ -317,6 +346,8 @@ void BigInt::createFromString(const std::string &s){
 		else
 			throw ConstructionException();
 	}
+
+	ensurePositiveZero();
 }
 
 void BigInt::allocateDigits(std::size_t digits){
@@ -364,171 +395,48 @@ BigInt::Digit BigInt::divint(BigInt a, BigInt b){
 	return result;
 }
 
-//*** Unit testing *******************************************
-
-#ifdef DEBUG
-
-#define CATCH_CONFIG_MAIN
-#include "../catch.hpp"
-
-TEST_CASE("Comparing BigInt objects", "BigInt::operator=="){
-	// REQUIRE( BigInt() == 0 );
-
-	REQUIRE( BigInt(12345) == 12345 );
-	REQUIRE( BigInt(-1) == -1 );
-	REQUIRE( BigInt(0) == 0 );
-
-	REQUIRE( BigInt(321) != 999 );
-	REQUIRE( BigInt(-123) != 123 );
-	REQUIRE( BigInt(-50000) != -49999 );
-}
-
-TEST_CASE("Test copy constructor", "BigInt(const BigInt&)"){
-	BigInt a("-1234567890123456789012345678901234567890");
-	BigInt b(a);
-	REQUIRE( a == b );
-}
-
-TEST_CASE("Test assignment operator", "operator="){
-	BigInt a("-1234567890123456789012345678901234567890");
-	BigInt b(666);
-	b = a;
-	REQUIRE( a == b );
-}
-
-TEST_CASE("Relation a > b", "operator>"){
-	REQUIRE( BigInt(1234) > BigInt(99) );
-	REQUIRE( BigInt(1234) > BigInt(1099) );
-	REQUIRE( BigInt(100) > BigInt(-5421) );
-	REQUIRE( BigInt(-100) > BigInt(-125) );
-}
-
-TEST_CASE("Relation a < b", "operator<"){
-	REQUIRE( BigInt(99) < BigInt(1234) );
-	REQUIRE( BigInt(1099) < BigInt(1234) );
-	REQUIRE( BigInt(-100) < BigInt(12) );
-	REQUIRE( BigInt(-888) < BigInt(-4) );
-}
-
-TEST_CASE("Addition", "operator+"){
-	REQUIRE( BigInt(30) + BigInt(1) == 31 );
-	REQUIRE( BigInt(-30) + BigInt(1) == -29 );
-	REQUIRE( BigInt(30) + BigInt(-1) == 29 );
-	REQUIRE( BigInt(-30) + BigInt(-1) == -31 );
-}
-
-TEST_CASE("Substraction", "operator-"){
-	REQUIRE( BigInt(99) - BigInt(9) == BigInt(90) );
-	REQUIRE( BigInt(-99) - BigInt(9) == BigInt(-108) );
-	REQUIRE( BigInt(99) - BigInt(-9) == BigInt(108) );
-	REQUIRE( BigInt(-99) - BigInt(-9) == BigInt(-90) );
-}
-
-TEST_CASE("Multiplication", "operator*"){
-	BigInt a(12345), b(7099), c(12345*7099);
-	REQUIRE( a*b == c );
-	REQUIRE( b*(-a) == -c );
-	REQUIRE( (-a)*(-b) == c );
-	REQUIRE( (-a)*b == -c );
-}
-
-TEST_CASE("Division", "operator/"){
-	REQUIRE( BigInt(256) / BigInt(4) == 64 );
-	REQUIRE( BigInt(-256) / BigInt(4) == -64 );
-	REQUIRE( BigInt(256) / BigInt(-4) == -64 );
-	REQUIRE( BigInt(-256) / BigInt(-4) == 64 );
-}
-
-TEST_CASE("Modulus", "operator%"){
-	REQUIRE( BigInt(17) % BigInt(8) == 1 );
-	REQUIRE( BigInt(-17) % BigInt(8) == 7 );
-	REQUIRE( BigInt(17) % BigInt(-8) == -7 );
-	REQUIRE( BigInt(-17) % BigInt(-8) == -1 );
-}
-
-
-/*TEST_CASE("divint", "divint()"){
-	REQUIRE( BigInt::divint(36, 6) == 6 );
-	REQUIRE( BigInt::divint(37, 6) == 6 );
-	REQUIRE( BigInt::divint(41, 6) == 6 );
-	REQUIRE( BigInt::divint(42, 6) == 7 );
-
-	REQUIRE( BigInt::divint(13, 13) == 1 );
-	REQUIRE( BigInt::divint(8, 13) == 0 );
-	REQUIRE( BigInt::divint(0, 5) == 0 );
-	
-	REQUIRE_THROWS_AS( BigInt::divint(1, 0), BigInt::ZeroDivisionException );
-	REQUIRE_THROWS_AS( BigInt::divint(0, 0), BigInt::ZeroDivisionException );
-}*/
-
-#else
+//************************************************************
 
 int main(){
-	srand(time(NULL));
+	std::cout << "Interactive calculator\n"
+	          << "Usage: 'NUMBER [+-*/%] NUMBER'\n\n";
 
-	/*while(true){
+	while(true){
 		BigInt a(0), b(0);
 		char operation;
 		std::cout << ">>> ";
+		// Read in format "a op b". Spaces are required.
 		std::cin >> a >> operation >> b;
+
+		BigInt p(0);
 
 		switch(operation){
 		case '+':
-			std::cout << a << " + " << b << " = " << a+b;
+			p = a+b;
 			break;
 		case '-':
-			std::cout << a << " - " << b << " = " << a-b;
+			p = a-b;
 			break;
 		case '*':
-			std::cout << a << " * " << b << " = " << a*b;
+			p = a*b;
 			break;
 		case '/':
-			std::cout << a << " / " << b << " = " << a/b << "(mod " << a%b << ')';
+			try{ p = a/b; }
+			catch(BigInt::BigIntException&){
+				std::cerr << "[Failed]\n";
+				continue;
+			}
 			break;
 		case '%':
-			std::cout << a << " % " << b << " = " << a%b;
+			try{ p = a%b; }
+			catch(BigInt::BigIntException&){
+				std::cerr << "[Failed]\n";
+				continue;
+			}
 			break;
 		default:
-			std::cout << "[Error]";
+			std::cerr << "[Unknown operation]\n";
 		}
-		std::cout << std::endl;
-	}*/
-	
-	const int RANGE = 5000;
-	const int ITERATIONS = 1000000;
-	for(int i=0; i<ITERATIONS; ++i){
-		int a = rand() % (2*RANGE) - RANGE;
-		int b = rand() % (2*RANGE) - RANGE;
-		
-		/*BigInt p = BigInt(a)+BigInt(b);
-		BigInt m = BigInt(a)-BigInt(b);
-		BigInt d = b ? BigInt(a)/BigInt(b) : 0;
-
-		if(p != a+b){
-			std::cerr << "Err: "<<a<<" + "<<b<<" != "<< p << '\n';
-			break;
-		}
-		if(m != a-b){
-			std::cerr << "Err: "<<a<<" - "<<b<<" != "<< m << '\n';
-			break;
-		}
-		if(b && d != a/b){
-			std::cerr << "Err: "<<a<<" / "<<b<<" != "<< d << '\n';
-			break;
-		}*/
-
-		BigInt m = BigInt(a)*BigInt(b);
-		if(m != a*b){
-			std::cerr << "Err: "<<a<<" * "<<b<<" != "<< m << '\n';
-			break;
-		}
-
-		if(i % 100 == 0){
-			std::cout << "\rProgress: " << (i*100.0f/ITERATIONS) << "%         ";
-		}
+		std::cout << a << ' ' << operation << ' ' << b << " = " << p << '\n';
 	}
-	std::cout << "\nDone.\n";
 }
-
-#endif
-
