@@ -200,10 +200,14 @@ BigInt BigInt::operator-(const BigInt &right) const{
 // Naive implementation.
 BigInt BigInt::operator*(const BigInt &right) const{
 	BigInt result(0);
+	if(*this == 0 || right == 0)
+		return result;
+		
 	BigInt rabs = right.abs();
 	for(BigInt I = 0; I != rabs; I += 1)
 		result += *this;
-	result.sign = (sign ^ right.sign);
+	if(result != 0)
+		result.sign = (sign ^ right.sign);
 	return result;
 }
 
@@ -462,7 +466,7 @@ TEST_CASE("Modulus", "operator%"){
 int main(){
 	srand(time(NULL));
 
-	while(true){
+	/*while(true){
 		BigInt a(0), b(0);
 		char operation;
 		std::cout << ">>> ";
@@ -488,15 +492,15 @@ int main(){
 			std::cout << "[Error]";
 		}
 		std::cout << std::endl;
-	}
+	}*/
 	
-	/*const int RANGE = 500000;
+	const int RANGE = 5000;
 	const int ITERATIONS = 1000000;
 	for(int i=0; i<ITERATIONS; ++i){
 		int a = rand() % (2*RANGE) - RANGE;
 		int b = rand() % (2*RANGE) - RANGE;
 		
-		BigInt p = BigInt(a)+BigInt(b);
+		/*BigInt p = BigInt(a)+BigInt(b);
 		BigInt m = BigInt(a)-BigInt(b);
 		BigInt d = b ? BigInt(a)/BigInt(b) : 0;
 
@@ -511,13 +515,19 @@ int main(){
 		if(b && d != a/b){
 			std::cerr << "Err: "<<a<<" / "<<b<<" != "<< d << '\n';
 			break;
+		}*/
+
+		BigInt m = BigInt(a)*BigInt(b);
+		if(m != a*b){
+			std::cerr << "Err: "<<a<<" * "<<b<<" != "<< m << '\n';
+			break;
 		}
 
 		if(i % 100 == 0){
 			std::cout << "\rProgress: " << (i*100.0f/ITERATIONS) << "%         ";
 		}
 	}
-	std::cout << "\nDone.\n";*/
+	std::cout << "\nDone.\n";
 }
 
 #endif
