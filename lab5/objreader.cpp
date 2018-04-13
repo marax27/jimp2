@@ -197,19 +197,19 @@ int main(){
 					       << box.z_min << ", " << box.z_max << "]\n";
 
 	{
-	JiMP2::BMP bitmap(600, 400);
+	JiMP2::BMP bitmap(720, 480);
 	bitmap.projectObjXYForward(model, 0xaa, 0, 0);
 	std::ofstream writer("project_xy_forw.bmp", std::ios::binary);
 	writer << bitmap;
 	writer.close();
 	}{
-	JiMP2::BMP bitmap(600, 400);
+	JiMP2::BMP bitmap(720, 480);
 	bitmap.projectObjXZForward(model, 0xaa, 0, 0);
 	std::ofstream writer("project_xz_forw.bmp", std::ios::binary);
 	writer << bitmap;
 	writer.close();
 	}{
-	JiMP2::BMP bitmap(600, 400);
+	JiMP2::BMP bitmap(720, 480);
 	bitmap.projectObjYZForward(model, 0xaa, 0, 0);
 	std::ofstream writer("project_yz_forw.bmp", std::ios::binary);
 	writer << bitmap;

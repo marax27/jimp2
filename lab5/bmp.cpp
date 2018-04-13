@@ -6,13 +6,21 @@
 
 using namespace std;
 
+//*** Auxilliary functions ***********************************
+
+int negativeToZero(int x){
+	return x < 0 ? 0 : x;
+}
+
+//************************************************************
+
 namespace JiMP2 {
 
 //************************************************************
 
 void BMP::projectObjXYForward(const Obj &object,
 	unsigned char r, unsigned char g, unsigned char b){
-	
+
 	// Adjust image scaling.
 	const AABB &aabb = object.getAABB();
 	double scale_x = getWidth() / (double)(aabb.x_max - aabb.x_min);
@@ -32,14 +40,20 @@ void BMP::projectObjXYForward(const Obj &object,
 		};
 
 		// Draw a triangle.
-		for(int i = 0; i != 3; ++i)
+		for(int i = 0; i != 3; ++i){
+			int x0 = scale*(points[i%3].getX() + dx),
+			    y0 = scale*(points[i%3].getY() + dy),
+				x1 = scale*(points[(i+1)%3].getX() + dx),
+				y1 = scale*(points[(i+1)%3].getY() + dy);
+
 			drawLine(
-				(uint16_t)(scale*(points[i%3].getX() + dx)),
-				(uint16_t)(scale*(points[i%3].getY() + dy)),
-				(uint16_t)(scale*(points[(i+1)%3].getX() + dx)),
-				(uint16_t)(scale*(points[(i+1)%3].getY() + dy)),
+				(uint16_t)negativeToZero(x0),
+				(uint16_t)negativeToZero(y0),
+				(uint16_t)negativeToZero(x1),
+				(uint16_t)negativeToZero(y1),
 				r, g, b
 			);
+		}
 	}
 }
 
@@ -67,14 +81,21 @@ void BMP::projectObjXZForward(const Obj &object,
 		};
 
 		// Draw a triangle.
-		for(int i = 0; i != 3; ++i)
+		for(int i = 0; i != 3; ++i){
+			int x0 = scale*(points[i%3].getX() + dx),
+			    z0 = scale*(points[i%3].getZ() + dz),
+			    x1 = scale*(points[(i+1)%3].getX() + dx),
+			    z1 = scale*(points[(i+1)%3].getZ() + dz);
+			
 			drawLine(
-				(uint16_t)(scale*(points[i%3].getX() + dx)),
-				(uint16_t)(scale*(points[i%3].getZ() + dz)),
-				(uint16_t)(scale*(points[(i+1)%3].getX() + dx)),
-				(uint16_t)(scale*(points[(i+1)%3].getZ() + dz)),
+				(uint16_t)negativeToZero(x0),
+				(uint16_t)negativeToZero(z0),
+				(uint16_t)negativeToZero(x1),
+				(uint16_t)negativeToZero(z1),
 				r, g, b
 			);
+
+		}
 	}
 }
 
@@ -102,14 +123,20 @@ void BMP::projectObjYZForward(const Obj &object,
 		};
 
 		// Draw a triangle.
-		for(int i = 0; i != 3; ++i)
+		for(int i = 0; i != 3; ++i){
+			int y0 = scale*(points[i%3].getY() + dy),
+			    z0 = scale*(points[i%3].getZ() + dz),
+			    y1 = scale*(points[(i+1)%3].getY() + dy),
+			    z1 = scale*(points[(i+1)%3].getZ() + dz);
+
 			drawLine(
-				(uint16_t)(scale*(points[i%3].getY() + dy)),
-				(uint16_t)(scale*(points[i%3].getZ() + dz)),
-				(uint16_t)(scale*(points[(i+1)%3].getY() + dy)),
-				(uint16_t)(scale*(points[(i+1)%3].getZ() + dz)),
+				(uint16_t)negativeToZero(y0),
+				(uint16_t)negativeToZero(z0),
+				(uint16_t)negativeToZero(y1),
+				(uint16_t)negativeToZero(z1),
 				r, g, b
 			);
+		}
 	}
 }
 
