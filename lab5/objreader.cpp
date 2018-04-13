@@ -19,16 +19,16 @@ std::ostream& operator<<(std::ostream &out, const Obj &model){
 		out << "v " 
 		    << p.getX() << ' '
 			<< p.getY() << ' '
-		    << p.getZ() << '\n';
+		    << p.getZ() << " \n";
 	}
 
 	// Write faces.
 	for(index_t i = 0; i != model.numberOfFaces(); ++i){
 		const Triangle &t = model.getFace(i);
 		out << "f "
-		    << t.getVertexIndex(0) << ' '
-		    << t.getVertexIndex(1) << ' '
-		    << t.getVertexIndex(2) << '\n';
+		    << t.getVertexIndex(0)+1 << ' '
+		    << t.getVertexIndex(1)+1 << ' '
+		    << t.getVertexIndex(2)+1 << " \n";
 	}
 
 	return out;
@@ -164,8 +164,6 @@ bool ObjReader::readFace(const char *line){
 		return true;  //omit face without stopping a program
 	}
 
-	// std::cerr << "Try: " << vertex_indices[0] << ", " << vertex_indices[1] << ", " << vertex_indices[2] << "; " << vertices.size() << '\n';
-
 	instance->appendTriangleFromPoints(vertex_indices[0], vertex_indices[1], vertex_indices[2]);
 
 	// Handle quads.
@@ -185,7 +183,13 @@ bool ObjReader::readNotImplemented(const char*){
 
 int main(){
 	Obj model;
-	ObjReader().readObjFile(model, "Sword/Scottish Sword.obj");
+
+	try{
+		ObjReader().readObjFile(model, "model.obj");
+	}catch(ObjReader::ObjParseException&){
+		std::cerr << "Failed to read a file.\n";
+		return 1;
+	}
 
 	std::cout << "Processing done\n\t"
 	          << model.numberOfVertices() << " vertices read\n\t"
@@ -195,26 +199,24 @@ int main(){
 	std::cout << "AABB: [" << box.x_min << ", " << box.x_max << "]["
 	                       << box.y_min << ", " << box.y_max << "]["
 					       << box.z_min << ", " << box.z_max << "]\n";
+	
+	JiMP2::BMP bitmapxy(720, 480);
+	bitmapxy.projectObjXYForward(model, 0xaa, 0, 0);
+	std::ofstream writerxy("project_xy_forw.bmp", std::ios::binary);
+	writerxy << bitmapxy;
+	writerxy.close();
 
-	{
-	JiMP2::BMP bitmap(720, 480);
-	bitmap.projectObjXYForward(model, 0xaa, 0, 0);
-	std::ofstream writer("project_xy_forw.bmp", std::ios::binary);
-	writer << bitmap;
-	writer.close();
-	}{
-	JiMP2::BMP bitmap(720, 480);
-	bitmap.projectObjXZForward(model, 0xaa, 0, 0);
-	std::ofstream writer("project_xz_forw.bmp", std::ios::binary);
-	writer << bitmap;
-	writer.close();
-	}{
-	JiMP2::BMP bitmap(720, 480);
-	bitmap.projectObjYZForward(model, 0xaa, 0, 0);
-	std::ofstream writer("project_yz_forw.bmp", std::ios::binary);
-	writer << bitmap;
-	writer.close();
-	}
+	JiMP2::BMP bitmapxz(720, 480);
+	bitmapxz.projectObjXZForward(model, 0xaa, 0, 0);
+	std::ofstream writerxz("project_xz_forw.bmp", std::ios::binary);
+	writerxz << bitmapxz;
+	writerxz.close();
+
+	JiMP2::BMP bitmapyz(720, 480);
+	bitmapyz.projectObjYZForward(model, 0xaa, 0, 0);
+	std::ofstream writeryz("project_yz_forw.bmp", std::ios::binary);
+	writeryz << bitmapyz;
+	writeryz.close();
 
 	return 0;
 }

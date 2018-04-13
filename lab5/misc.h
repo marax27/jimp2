@@ -1,10 +1,12 @@
 #ifndef _MISC_H_
 #define _MISC_H_
 
-// Miscellaneous smaller classes:
-// * Point3
-// * Triangle
-// * Obj
+/* Miscellaneous classes:
+ * AABB
+ * Point3
+ * Triangle
+ * Obj
+ */
 
 #include <iostream>
 #include <vector>
