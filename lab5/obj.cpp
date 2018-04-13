@@ -1,4 +1,3 @@
-#include <exception>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -6,38 +5,32 @@
 #include <vector>
 #include <unordered_map>
 
-//************************************************************
-
-struct Point3{
-	Point3() = default;
-	Point3(double x, double y, double z) : x(x), y(y), z(z) {}
-
-	double x = {0.0}, y = {0.0}, z = {0.0};
-};
-
-struct Triangle{
-	Triangle() = default;
-	Triangle(Point3 a, Point3 b, Point3 c) : p1(a), p2(b), p3(c) {}
-
-	Point3 p1, p2, p3;
-};
+#include "misc.h"
 
 //************************************************************
 
-class Obj{
-public:
-	Obj(const std::vector<Triangle> &face_list) : faces(face_list) {}
+std::ostream& operator<<(std::ostream &os, const Obj &model){
+	os << "# Wavefront OBJ file\n";
 
-private:
-	// std::vector<Point3> points;
-	std::vector<Triangle> faces;
-};
+	// Write vertices.
+	for(index_t i = 0; i != model.numberOfVertices(); ++i){
+		const Point3 &p = model.getVertex(i);
+		os << "v " << p.getX() << ' ' << p.getY() << ' ' << p.getZ() << '\n';
+	}
+
+	// Write faces.
+	for(index_t i = 0; i != model.numberOfFaces(); ++i){
+		
+	}
+
+	return os;
+}
 
 //************************************************************
 
 class ObjReader{
 public:
-	Obj readObjFile(const std::string &fname);
+	bool readObjFile(Obj &object, const std::string &fname);
 
 	class ObjParseException : std::exception {};
 
@@ -46,12 +39,14 @@ private:
 	bool readFace(const char *line);
 	bool readNotImplemented(const char*);
 
-	std::vector<Point3> vertices;
-	std::vector<Triangle> faces;
+	Obj *instance;
 };
 
-Obj ObjReader::readObjFile(const std::string &fname){
-	vertices.resize(0);
+//************************************************************
+
+bool ObjReader::readObjFile(Obj &object, const std::string &fname){
+	instance = &object;
+	instance->clear();
 
 	std::size_t line_number = 0;
 	std::ifstream reader(fname, std::ios::binary);
@@ -71,7 +66,6 @@ Obj ObjReader::readObjFile(const std::string &fname){
 		{ "o", &ObjReader::readNotImplemented }
 	});
 	
-	//for(; reader.good(); ++line_number){
 	while(reader.good()){
 		++line_number;
 		const int BUFSIZE = 256;
@@ -104,23 +98,20 @@ Obj ObjReader::readObjFile(const std::string &fname){
 			break;
 	}
 
-	std::cerr << "Processing done\n\t" << vertices.size()
-	          << " vertices read\n\t" << faces.size() << " faces read\n";
-
 	reader.close();
-	return Obj(faces);
+	return true;
 }
 
 //************************************************************
 
 bool ObjReader::readVertex(const char *line){
 	// Format: 'v' x y z
-	Point3 p;
-	if(sscanf(line, "v %lf %lf %lf", &p.x, &p.y, &p.z) != 3){
+	double x, y, z;
+	if(sscanf(line, "v %lf %lf %lf", &x, &y, &z) != 3){
 		std::cerr << "[Error] Unsupported vertex format: '" << line << "'\n";
 		return false;
 	}
-	vertices.push_back(p);
+	instance->appendVertex(Point3{x, y, z});
 	return true;
 }
 
@@ -167,22 +158,12 @@ bool ObjReader::readFace(const char *line){
 
 	// std::cerr << "Try: " << vertex_indices[0] << ", " << vertex_indices[1] << ", " << vertex_indices[2] << "; " << vertices.size() << '\n';
 
-	Triangle t(
-		vertices[vertex_indices[0]],
-	    vertices[vertex_indices[1]],
-		vertices[vertex_indices[2]]
-	);
-	faces.push_back(std::move(t));
+	instance->appendTriangleFromPoints(vertex_indices[0], vertex_indices[1], vertex_indices[2]);
 
 	// Handle quads.
-	if(vertex_indices.size() == 4){
-		Triangle u(
-			vertices[vertex_indices[2]],
-			vertices[vertex_indices[3]],
-			vertices[vertex_indices[0]]
-		);
-		faces.push_back(std::move(u));
-	}
+	if(vertex_indices.size() == 4)
+		instance->appendTriangleFromPoints(vertex_indices[2], vertex_indices[3], vertex_indices[0]);
+
 	return true;
 }
 
@@ -195,10 +176,12 @@ bool ObjReader::readNotImplemented(const char*){
 //************************************************************
 
 int main(){
-	ObjReader reader;
-	Obj model = reader.readObjFile("Sword/Scottish Sword.obj");
+	Obj model;
+	ObjReader().readObjFile(model, "Sword/Scottish Sword.obj");
 
-
-
+	std::cout << "Processing done\n\t"
+	          << model.numberOfVertices() << " vertices read\n\t"
+	          << model.numberOfFaces() << " faces read\n";
+	
 	return 0;
 }
