@@ -37,17 +37,18 @@ private:
 class Triangle{
 public:
 	Triangle() = default;
-	Triangle(const Point3 *a, const Point3 *b, const Point3 *c) : vertices{a, b, c} {}
+	Triangle(index_t a, index_t b, index_t c) : vertices{a, b, c} {}
 
-	const Point3& getVertex(index_t i) const{
-		// index_t is unsigned, no negative values allowed.
+	// Return index of n-th vertex in vertex array.
+	index_t getVertexIndex(index_t i) const{
+		// index_t is unsigned, no negative values are passed.
 		if(i > 2)
 			throw std::out_of_range("Invalid index while accessing triangle");
-		return *vertices[i];
+		return vertices[i];
 	}
 
 private:
-	const Point3 *vertices[3];
+	index_t vertices[3];
 };
 
 //************************************************************
@@ -68,7 +69,7 @@ public:
 	}
 
 	void appendTriangleFromPoints(index_t p1, index_t p2, index_t p3){
-		faces.push_back(Triangle(&vertices[p1], &vertices[p2], &vertices[p3]));
+		faces.push_back(Triangle(p1, p2, p3));
 	}
 
 	// Access elements.
@@ -83,6 +84,9 @@ public:
 	}
 	const Triangle& getFace(index_t i) const{
 		return faces.at(i);
+	}
+	const Point3& getVertexOfFace(index_t triangle_idx, index_t vertex_idx){
+		return vertices.at(faces.at(triangle_idx).getVertexIndex(vertex_idx));
 	}
 
 private:

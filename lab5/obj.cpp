@@ -9,21 +9,28 @@
 
 //************************************************************
 
-std::ostream& operator<<(std::ostream &os, const Obj &model){
-	os << "# Wavefront OBJ file\n";
+std::ostream& operator<<(std::ostream &out, const Obj &model){
+	out << "# Wavefront OBJ file\n";
 
 	// Write vertices.
 	for(index_t i = 0; i != model.numberOfVertices(); ++i){
 		const Point3 &p = model.getVertex(i);
-		os << "v " << p.getX() << ' ' << p.getY() << ' ' << p.getZ() << '\n';
+		out << "v " 
+		    << p.getX() << ' '
+			<< p.getY() << ' '
+		    << p.getZ() << '\n';
 	}
 
 	// Write faces.
 	for(index_t i = 0; i != model.numberOfFaces(); ++i){
-		
+		const Triangle &t = model.getFace(i);
+		out << "f "
+		    << t.getVertexIndex(0) << ' '
+		    << t.getVertexIndex(1) << ' '
+		    << t.getVertexIndex(2) << '\n';
 	}
 
-	return os;
+	return out;
 }
 
 //************************************************************
@@ -181,7 +188,7 @@ int main(){
 
 	std::cout << "Processing done\n\t"
 	          << model.numberOfVertices() << " vertices read\n\t"
-	          << model.numberOfFaces() << " faces read\n";
+	          << model.numberOfFaces() << " faces read\n\n";
 	
 	return 0;
 }
