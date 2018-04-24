@@ -1,0 +1,6 @@
+Zawartość
+
+* misc.h - klasy AABB, Point3, Triangle, Obj
+* objreader.cpp - klasa ObjReader, funkcja main()
+* bmp.h, bmp.cpp - podstawowa klasa BMP, wzbogacona o bezpieczne rysowanie punktów, rysowanie linii prostych i obsługę klasy Obj
+

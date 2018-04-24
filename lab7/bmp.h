@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <iostream>
-#include "misc.h"
 
 // define IS_LITTLE_ENDIAN (!!(union { uint16_t u16; unsigned char c; }){ .u16 = 1 }.c)
 #define IS_LITTLE_ENDIAN (*(uint16_t *)"\0\xff" > 0x100)
@@ -13,9 +12,6 @@ namespace JiMP2 {
 /*
  * Informacje o formacie BMP https://en.wikipedia.org/wiki/BMP_file_format
  */
-
-// Zmodyfikowana wersja klasy BMP,
-// dostosowana do wizualizacji obiektów Obj.
 
 struct BMPFileHeader {
 	char id[2];
@@ -55,27 +51,13 @@ public:
 	BMP(uint16_t width, uint16_t height);
 	virtual ~BMP();
 
-	// Safe version.
 	void setPixel(uint16_t x, uint16_t y, unsigned char r, unsigned char g,
 			unsigned char b);
-
-	void drawLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1,
-			unsigned char r, unsigned char g, unsigned char b);
 
 	uint16_t getWidth() const { return bitmapCoreHeader.bmpWidth; }
 	uint16_t getHeight() const { return bitmapCoreHeader.bmpHeight; }
 
 	friend std::ostream& operator<<(std::ostream& os, const BMP& bmp);
-
-	// OBJ.
-
-	// "camera"->   ----> z-axis
-	void projectObjXY(const Obj &object,
-		unsigned char r, unsigned char g, unsigned char b);
-	void projectObjXZ(const Obj &object,
-		unsigned char r, unsigned char g, unsigned char b);
-	void projectObjYZ(const Obj &object,
-		unsigned char r, unsigned char g, unsigned char b);
 };
 
 }

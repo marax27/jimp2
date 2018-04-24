@@ -1,9 +1,9 @@
 content/
-
 .vscode/
-
 a.out
-
 *.bmp
-
 makefile
+*.zip
+Sword/
+
+

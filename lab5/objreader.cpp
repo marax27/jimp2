@@ -201,19 +201,19 @@ int main(){
 					       << box.z_min << ", " << box.z_max << "]\n";
 	
 	JiMP2::BMP bitmapxy(720, 480);
-	bitmapxy.projectObjXYForward(model, 0xaa, 0, 0);
+	bitmapxy.projectObjXY(model, 0xaa, 0, 0);
 	std::ofstream writerxy("project_xy_forw.bmp", std::ios::binary);
 	writerxy << bitmapxy;
 	writerxy.close();
 
 	JiMP2::BMP bitmapxz(720, 480);
-	bitmapxz.projectObjXZForward(model, 0xaa, 0, 0);
+	bitmapxz.projectObjXZ(model, 0xaa, 0, 0);
 	std::ofstream writerxz("project_xz_forw.bmp", std::ios::binary);
 	writerxz << bitmapxz;
 	writerxz.close();
 
 	JiMP2::BMP bitmapyz(720, 480);
-	bitmapyz.projectObjYZForward(model, 0xaa, 0, 0);
+	bitmapyz.projectObjYZ(model, 0xaa, 0, 0);
 	std::ofstream writeryz("project_yz_forw.bmp", std::ios::binary);
 	writeryz << bitmapyz;
 	writeryz.close();

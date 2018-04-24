@@ -18,7 +18,7 @@ namespace JiMP2 {
 
 //************************************************************
 
-void BMP::projectObjXYForward(const Obj &object,
+void BMP::projectObjXY(const Obj &object,
 	unsigned char r, unsigned char g, unsigned char b){
 
 	// Adjust image scaling.
@@ -59,7 +59,7 @@ void BMP::projectObjXYForward(const Obj &object,
 
 //************************************************************
 
-void BMP::projectObjXZForward(const Obj &object,
+void BMP::projectObjXZ(const Obj &object,
 	unsigned char r, unsigned char g, unsigned char b){
 	
 	// Adjust image scaling.
@@ -101,7 +101,7 @@ void BMP::projectObjXZForward(const Obj &object,
 
 //************************************************************
 
-void BMP::projectObjYZForward(const Obj &object,
+void BMP::projectObjYZ(const Obj &object,
 	unsigned char r, unsigned char g, unsigned char b){
 	
 	// Adjust image scaling.
