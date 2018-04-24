@@ -2,6 +2,7 @@
 #define _INTERPRETER_H_
 
 #include <string>
+#include <vector>
 #include <sstream>
 #include "drawer.h"
 
@@ -89,15 +90,15 @@ public:
 	//------------------------------
 
 private:
-	void readLine(const char *line);
-	void readCircle(const char *line);
-	void readDisk(const char *line);
-	void readArc(const char *line);
-	void readCircularSector(const char *line);
+	void processLine(const std::vector<fp_t> &args);
+	void processCircle(const std::vector<fp_t> &args);
+	void processDisk(const std::vector<fp_t> &args);
+	void processArc(const std::vector<fp_t> &args);
+	void processCircularSector(const std::vector<fp_t> &args);
 
-	void readEllipse(const char *line);
-	void readRectangle(const char *line);
-	void readRegularPolygon(const char *line);
+	void processEllipse(const std::vector<fp_t> &args);
+	void processRectangle(const std::vector<fp_t> &args);
+	void processRegularPolygon(const std::vector<fp_t> &args);
 
 	Drawer *internal_drawer;
 

@@ -7,6 +7,14 @@
 
 //************************************************************
 
+bool isRGBValid(fp_t r, fp_t g, fp_t b){
+	return in(0, r, 256) &&
+	       in(0, g, 256) &&
+	       in(0, b, 256);
+}
+
+//************************************************************
+
 void Interpreter::analyze(const std::string &filename, Drawer &drawer){
 	std::ifstream reader(filename, std::ios::binary);
 	if(!reader)
@@ -14,18 +22,21 @@ void Interpreter::analyze(const std::string &filename, Drawer &drawer){
 
 	internal_drawer = &drawer;
 	
-	std::unordered_map<std::string, void(Interpreter::*)(const char*)> handlers({
+	std::unordered_map<
+		std::string,
+		void(Interpreter::*)(const std::vector<fp_t>&)> handlers({
+
 		// Basic shapes.
-		{"L", &Interpreter::readLine},
-		{"C", &Interpreter::readCircle},
-		{"D", &Interpreter::readDisk},
-		{"A", &Interpreter::readArc},
-		{"S", &Interpreter::readCircularSector},
+		{"L", &Interpreter::processLine},
+		{"C", &Interpreter::processCircle},
+		{"D", &Interpreter::processDisk},
+		{"A", &Interpreter::processArc},
+		{"S", &Interpreter::processCircularSector},
 		
 		// Additional shapes.
-		{"E", &Interpreter::readEllipse},
-		{"R", &Interpreter::readRectangle},
-		{"P", &Interpreter::readRegularPolygon}
+		{"E", &Interpreter::processEllipse},
+		{"R", &Interpreter::processRectangle},
+		{"P", &Interpreter::processRegularPolygon}
 	});
 	
 	this->line_no = 0;
@@ -41,10 +52,11 @@ void Interpreter::analyze(const std::string &filename, Drawer &drawer){
 		if(line[len-1] == '\r')
 			line[(len--)-1] = '\0';
 		
-		;
+		std::istringstream ss{line};
+		std::string token;
 
-		char token[16]{};
-		if(sscanf(line, "%15s", token) != 1)
+		ss >> token;
+		if(token.empty())
 			continue;  //skip empty line
 
 		if(token[0] == '#')
@@ -56,7 +68,20 @@ void Interpreter::analyze(const std::string &filename, Drawer &drawer){
 		if(handler_itr == handlers.end())
 			throw UnknownInstruction(token, line_no);
 		
-		(this->*handler_itr->second)(line);
+		// Read all arguments.
+		std::vector<fp_t> args;
+		fp_t f;
+		e_ProcessingStatus err = GOOD;
+		while(!err){
+			err = readFromStream(ss, f);
+			if(err != FAIL)
+				args.push_back(f);
+			else
+				throw InvalidArgType(this->current_instruction, line_no);
+		}
+
+		// Execute instruction - draw an object.
+		(this->*handler_itr->second)(args);
 
 		if(!reader.good())
 			break;
@@ -68,106 +93,234 @@ void Interpreter::analyze(const std::string &filename, Drawer &drawer){
 
 //************************************************************
 
-void Interpreter::readLine(const char *line){
+void Interpreter::processLine(const std::vector<fp_t> &args){
 	const int ARGCOUNT = 7;
-	std::istringstream ss{line};
-	std::string token;
 	Point a, b;
 	Colour c;
 
-	e_ProcessingStatus err;
-	fp_t args[ARGCOUNT];
-
-	// Read function arguments.
-	for(int i = 0; i != ARGCOUNT; ++i){
-		err = readFromStream(ss, a.x);
-		if(err == EOL)
-			throw InvalidArgCount(current_instruction, line_no, i, ARGCOUNT);
-		else if(err == FAIL)
-			throw InvalidArgType(current_instruction, line_no);
-	}
-
-	// ss.good() indicates there's still content in stream.
-	// This might mean someone passed too many arguments.
-	if(ss.good()){
-		int additional = 0;
-		std::string x;
-		while(ss.good()){
-			ss >> x;
-			++additional;
-		}
+	if(args.size() != ARGCOUNT)
 		throw InvalidArgCount(
-			current_instruction, line_no, ARGCOUNT+additional, ARGCOUNT);
-	}
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	a = Point(args[0], args[1]);
+	b = Point(args[2], args[3]);
+	
+	if(!isRGBValid(args[4], args[5], args[6]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[4], args[5], args[6]);
 
-	a = {args[0], args[1]};
-	b = {args[2], args[3]};
-	for(int i = 4; i != ARGCOUNT; ++i){
-		if(!in(0, args[i], 256))
-			throw InvalidArgType(current_instruction, line_no);
-	}
-	c = {args[4], args[5], args[6]};
-
-	// Draw an object.
-
+	internal_drawer->drawLine(a, b, c);
 }
 
 //************************************************************
 
-void Interpreter::readCircle(const char *line){
+void Interpreter::processCircle(const std::vector<fp_t> &args){
+	const int ARGCOUNT = 6;
 	Point s;
 	uint16_t r;
 	Colour c;
+
+	if(args.size() != ARGCOUNT)
+		throw InvalidArgCount(
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	s = Point(args[0], args[1]);
+	
+	if(args[2] < 0.0f)
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	r = args[2];
+
+	if(!isRGBValid(args[3], args[4], args[5]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[3], args[4], args[5]);
+
+	internal_drawer->drawCircle(s, r, c);
 }
 
 //************************************************************
 
-void Interpreter::readDisk(const char *line){
+void Interpreter::processDisk(const std::vector<fp_t> &args){
+	const int ARGCOUNT = 6;
 	Point s;
 	uint16_t r;
 	Colour c;
+
+	if(args.size() != ARGCOUNT)
+		throw InvalidArgCount(
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	s = Point(args[0], args[1]);
+	
+	if(args[2] < 0.0f)
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	r = args[2];
+
+	if(!isRGBValid(args[3], args[4], args[5]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[3], args[4], args[5]);
+
+	internal_drawer->drawDisk(s, r, c);
 }
 
 //************************************************************
 
-void Interpreter::readArc(const char *line){
+void Interpreter::processArc(const std::vector<fp_t> &args){
+	const int ARGCOUNT = 8;
 	Point s;
 	uint16_t r;
 	fp_t a1, a2;
 	Colour c;
+
+	if(args.size() != ARGCOUNT)
+		throw InvalidArgCount(
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	s = Point(args[0], args[1]);
+	
+	if(args[2] < 0.0f)
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	r = args[2];
+
+	a1 = args[3];
+	a2 = args[4];
+
+	if(!isRGBValid(args[5], args[6], args[7]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[5], args[6], args[7]);
+
+	internal_drawer->drawArc(s, r, a1, a2, c);
 }
 
 //************************************************************
 
-void Interpreter::readCircularSector(const char *line){
+void Interpreter::processCircularSector(const std::vector<fp_t> &args){
+	const int ARGCOUNT = 8;
 	Point s;
 	uint16_t r;
 	fp_t a1, a2;
 	Colour c;
+
+	if(args.size() != ARGCOUNT)
+		throw InvalidArgCount(
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	s = Point(args[0], args[1]);
+	
+	if(args[2] < 0.0f)
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	r = args[2];
+
+	a1 = args[3];
+	a2 = args[4];
+
+	if(!isRGBValid(args[5], args[6], args[7]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[5], args[6], args[7]);
+
+	internal_drawer->drawCircularSector(s, r, a1, a2, c);
 }
 
 //************************************************************
 
-void Interpreter::readEllipse(const char *line){
+void Interpreter::processEllipse(const std::vector<fp_t> &args){
+	const int ARGCOUNT = 7;
 	Point s;
 	uint16_t a, b;
 	Colour c;
+
+	if(args.size() != ARGCOUNT)
+		throw InvalidArgCount(
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	s = Point(args[0], args[1]);
+
+	if(args[2] < 0.0f || args[3] < 0.0f)
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	a = args[2];
+	b = args[3];
+
+	if(!isRGBValid(args[4], args[5], args[6]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[4], args[5], args[6]);
+
+	internal_drawer->drawEllipse(s, a, b, c);
 }
 
 //************************************************************
 
-void Interpreter::readRectangle(const char *line){
+void Interpreter::processRectangle(const std::vector<fp_t> &args){
+	const int ARGCOUNT = 7;
 	Point a, b;
 	Colour c;
+
+	if(args.size() != ARGCOUNT)
+		throw InvalidArgCount(
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	a = Point(args[0], args[1]);
+	b = Point(args[2], args[3]);
+
+	if(!isRGBValid(args[4], args[5], args[6]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[4], args[5], args[6]);
+
+	internal_drawer->drawRectangle(a, b, c);
 }
 
 //************************************************************
 
-void Interpreter::readRegularPolygon(const char *line){
+void Interpreter::processRegularPolygon(const std::vector<fp_t> &args){
+	const int ARGCOUNT = 7;
 	Point s;
 	int n;
 	fp_t side;
 	Colour c;
+
+	if(args.size() != ARGCOUNT)
+		throw InvalidArgCount(
+			this->current_instruction,
+			this->line_no,
+			ARGCOUNT,
+			args.size()
+		);
+	
+	s = Point(args[0], args[1]);
+	n = args[2];
+	side = args[3];
+
+	if(!isRGBValid(args[4], args[5], args[6]))
+		throw InvalidArgType(this->current_instruction, this->line_no);
+	c = Colour(args[4], args[5], args[6]);
+
+	internal_drawer->drawRegularPolygon(s, n, side, c);
 }
 
 //************************************************************
