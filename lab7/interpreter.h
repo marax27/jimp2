@@ -2,6 +2,7 @@
 #define _INTERPRETER_H_
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <sstream>
 #include "drawer.h"
@@ -21,9 +22,9 @@ public:
 		FileNotOpen(const std::string &filename)
 			: fn(filename) {}
 		virtual const char* what() const noexcept{
-			std::ostringstream ss;
-			ss << "Failed to open '" << fn << "'.";
-			return ss.str().c_str();
+			char *buffer = new char[128];
+			sprintf(buffer, "Failed to open '%s'.", fn.c_str());
+			return buffer;
 		}
 	private:
 		std::string fn;
@@ -47,29 +48,27 @@ public:
 			: InstructionException(instruction, line_number) {}
 		
 		virtual const char* what() const noexcept{
-			std::ostringstream ss;
-			ss << "Unknown instruction on line " << line_no << ": '" << instr << "'.";
-			return ss.str().c_str();
+			char *buffer = new char[128];
+			sprintf(buffer, "Unknown instruction on line %d: '%s'.",
+				line_no, instr.c_str());
+			return buffer;
 		}
 	};
 
 	class InvalidArgCount : public InstructionException{
 	public:
 		InvalidArgCount(const std::string &instruction, int line_number,
-			int provided, int expected)
-			: InstructionException(instruction, line_number), prov(provided), exp(expected) {}
+			int expected, int provided)
+			: InstructionException(instruction, line_number), exp(expected), prov(provided) {}
 		
 		virtual const char* what() const noexcept{
-			std::ostringstream ss;
-			ss << "Instruction '" << instr 
-			   << "' on line " << line_no
-			   << ": invalid number of arguments ("
-			   << exp << " expected, "
-			   << prov << " provided).";
-			return ss.str().c_str();
+			char *buffer = new char[128];
+			sprintf(buffer, "Instruction '%s' on line %d: invalid number of arguments (%d expected, %d provided).",
+				instr.c_str(), line_no, exp, prov);
+			return buffer;
 		}
 	private:
-		int prov, exp;
+		int exp, prov;
 	};
 
 	class InvalidArgType : public InstructionException{
@@ -78,11 +77,10 @@ public:
 			: InstructionException(instruction, line_number) {}
 
 		virtual const char* what() const noexcept{
-			std::ostringstream ss;
-			ss << "Instruction '" << instr 
-			   << "' on line " << line_no
-			   << ": invalid argument type.";
-			return ss.str().c_str();
+			char *buffer = new char[60];
+			sprintf(buffer, "Instruction '%s' on line %d: invalid argument type",
+				instr.c_str(), line_no);
+			return buffer;
 		}
 	private:
 		int prov, exp;
