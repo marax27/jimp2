@@ -7,6 +7,7 @@
 
 #include "misc.h"
 #include "bmp.h"
+#include "objreader.h"
 
 //************************************************************
 
@@ -36,23 +37,7 @@ std::ostream& operator<<(std::ostream &out, const Obj &model){
 
 //************************************************************
 
-class ObjReader{
-public:
-	bool readObjFile(Obj &object, const std::string &fname);
-
-	class ObjParseException : std::exception {};
-
-private:
-	bool readVertex(const char *line);
-	bool readFace(const char *line);
-	bool readNotImplemented(const char*);
-
-	Obj *instance;
-};
-
-//************************************************************
-
-bool ObjReader::readObjFile(Obj &object, const std::string &fname){
+void ObjReader::readObjFile(Obj &object, const std::string &fname){
 	instance = &object;
 	instance->clear();
 
@@ -85,19 +70,20 @@ bool ObjReader::readObjFile(Obj &object, const std::string &fname){
 		// Handle CRLF format.
 		if(line[len-1] == '\r')
 			line[(len--)-1] = '\0';
-		
-		char token[16]{};
-		if(sscanf(line, "%15s", token) != 1)
+
+		std::istringstream ss{line};
+		std::string token;
+
+		ss >> token;
+		if(token.empty())
 			continue;  //skip empty line
 
 		if(token[0] == '#')
 			continue;  //skip comments
 
-		auto handler_itr = handlers.find(std::string(token));
-		if(handler_itr == handlers.end()){
-			std::cerr << "[Warning]: Unknown Obj feature: " << token << ".\n";
-			continue;
-		}
+		auto handler_itr = handlers.find(token);
+		if(handler_itr == handlers.end())
+			throw ObjParseException();
 
 		if(!(this->*handler_itr->second)(line))
 			throw ObjParseException();
@@ -107,7 +93,6 @@ bool ObjReader::readObjFile(Obj &object, const std::string &fname){
 	}
 
 	reader.close();
-	return true;
 }
 
 //************************************************************
@@ -115,10 +100,19 @@ bool ObjReader::readObjFile(Obj &object, const std::string &fname){
 bool ObjReader::readVertex(const char *line){
 	// Format: 'v' x y z
 	double x, y, z;
-	if(sscanf(line, "v %lf %lf %lf", &x, &y, &z) != 3){
-		std::cerr << "[Error] Unsupported vertex format: '" << line << "'\n";
-		return false;
+	std::istringstream ss(line);
+	std::string token;
+
+	ss >> token >> x >> y >> z;
+	if(ss.good()){
+		token.clear();
+		ss >> token;
+		if(!token.empty())
+			return false;
 	}
+	else if(ss.fail())
+		return false;
+
 	instance->appendVertex(Point3{x, y, z});
 	return true;
 }
@@ -133,8 +127,8 @@ bool ObjReader::readFace(const char *line){
 	// f v/vt/vn ...
 
 	// Values 'vt' and 'vn' will be ignored.
-	int v = 0, vt = 0, vn = 0;
-	std::stringstream ss(line);
+	int v = 0;
+	std::istringstream ss(line);
 	std::string token;
 	ss >> token;  // line identifier
 
@@ -142,16 +136,16 @@ bool ObjReader::readFace(const char *line){
 
 	do{
 		ss >> token;
+		std::istringstream token_stream(token);
+
 		if(ss.eof())
 			break;
 		
-		if(sscanf(token.c_str(), "%d/%d/%d", &v, &vt, &vn) != 3 &&
-		   sscanf(token.c_str(), "%d//%d", &v, &vn) != 2 &&
-		   sscanf(token.c_str(), "%d/%d", &v, &vt) != 2 &&
-		   sscanf(token.c_str(), "%d", &v) != 1){
-			   std::cerr << "[Error] Unsupported face format: '" << line << "'\n";
-			   return false;
-		   }
+		token_stream >> v;
+		// Ignore the rest of a token.
+
+		if(token_stream.fail())
+			return false;
 		
 		// Indices in Obj file are 1-based. Correct them.
 		vertex_indices.push_back(v - 1);
