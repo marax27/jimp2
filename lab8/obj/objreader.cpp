@@ -175,40 +175,49 @@ bool ObjReader::readNotImplemented(const char*){
 
 //************************************************************
 
-int main(){
-	Obj model;
-
-	try{
-		ObjReader().readObjFile(model, "model.obj");
-	}catch(ObjReader::ObjParseException&){
-		std::cerr << "Failed to read a file.\n";
+int main(int argc, char *argv[]){
+	if(argc != 3){
+		std::cout << "Usage: " << argv[0] << " obj-filename bmp-filename\n";
 		return 1;
 	}
 
-	std::cout << "Processing done\n\t"
-	          << model.numberOfVertices() << " vertices read\n\t"
-	          << model.numberOfFaces() << " faces read\n\n";
+	Obj model;
+	std::string in_filename = argv[1],
+	            out_filename = argv[2];
+
+	try{
+		ObjReader().readObjFile(model, in_filename);
+	}catch(ObjReader::ObjParseException&){
+		std::cerr << "Failed to read '" << in_filename << "'.\n";
+		return 2;
+	}
+
+	// std::cout << "Processing done\n\t"
+	//           << model.numberOfVertices() << " vertices read\n\t"
+	//           << model.numberOfFaces() << " faces read\n\n";
 	
-	const AABB &box = model.getAABB();
-	std::cout << "AABB: [" << box.x_min << ", " << box.x_max << "]["
-	                       << box.y_min << ", " << box.y_max << "]["
-					       << box.z_min << ", " << box.z_max << "]\n";
+	// const AABB &box = model.getAABB();
+	// std::cout << "AABB: [" << box.x_min << ", " << box.x_max << "]["
+	//                        << box.y_min << ", " << box.y_max << "]["
+	// 				       << box.z_min << ", " << box.z_max << "]\n";
 	
-	JiMP2::BMP bitmapxy(720, 480);
+	int w = 480, h = 360;
+
+	JiMP2::BMP bitmapxy(w, h);
 	bitmapxy.projectObjXY(model, 0xaa, 0, 0);
-	std::ofstream writerxy("project_xy_forw.bmp", std::ios::binary);
+	std::ofstream writerxy("xy-" + out_filename, std::ios::binary);
 	writerxy << bitmapxy;
 	writerxy.close();
 
-	JiMP2::BMP bitmapxz(720, 480);
+	JiMP2::BMP bitmapxz(w, h);
 	bitmapxz.projectObjXZ(model, 0xaa, 0, 0);
-	std::ofstream writerxz("project_xz_forw.bmp", std::ios::binary);
+	std::ofstream writerxz("xz-" + out_filename, std::ios::binary);
 	writerxz << bitmapxz;
 	writerxz.close();
 
-	JiMP2::BMP bitmapyz(720, 480);
+	JiMP2::BMP bitmapyz(w, h);
 	bitmapyz.projectObjYZ(model, 0xaa, 0, 0);
-	std::ofstream writeryz("project_yz_forw.bmp", std::ios::binary);
+	std::ofstream writeryz("yz-" + out_filename, std::ios::binary);
 	writeryz << bitmapyz;
 	writeryz.close();
 
