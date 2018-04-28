@@ -69,7 +69,6 @@ public:
 
 	// OBJ.
 
-	// "camera"->   ----> z-axis
 	void projectObjXY(const Obj &object,
 		unsigned char r, unsigned char g, unsigned char b);
 	void projectObjXZ(const Obj &object,

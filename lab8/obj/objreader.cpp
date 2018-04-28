@@ -1,9 +1,8 @@
-#include <iostream>
+#include <unordered_map>
 #include <sstream>
 #include <fstream>
 #include <cstring>
 #include <vector>
-#include <unordered_map>
 
 #include "misc.h"
 #include "bmp.h"
@@ -44,7 +43,7 @@ void ObjReader::readObjFile(Obj &object, const std::string &fname){
 	std::size_t line_number = 0;
 	std::ifstream reader(fname, std::ios::binary);
 	if(!reader)
-		throw ObjParseException();
+		throw ObjNotOpen(fname);
 	
 	std::unordered_map<
 		std::string, bool(ObjReader::*)(const char*)> handlers({
@@ -83,10 +82,10 @@ void ObjReader::readObjFile(Obj &object, const std::string &fname){
 
 		auto handler_itr = handlers.find(token);
 		if(handler_itr == handlers.end())
-			throw ObjParseException();
+			throw ObjUnknownInstruction(line_number, token);
 
 		if(!(this->*handler_itr->second)(line))
-			throw ObjParseException();
+			throw ObjInvalidLine(line_number);
 		
 		if(!reader.good())
 			break;
@@ -153,8 +152,8 @@ bool ObjReader::readFace(const char *line){
 
 	// Only triangles and quads are allowed.
 	if(vertex_indices.size() != 3 && vertex_indices.size() != 4){
-		std::cerr << "[Warning] Unsupported number of face's vertices: "
-		          << vertex_indices.size() << ", omitting...\n";
+		// std::cerr << "[Warning] Unsupported number of face's vertices: "
+		//           << vertex_indices.size() << ", omitting...\n";
 		return true;  //omit face without stopping a program
 	}
 
@@ -174,52 +173,3 @@ bool ObjReader::readNotImplemented(const char*){
 }
 
 //************************************************************
-
-int main(int argc, char *argv[]){
-	if(argc != 3){
-		std::cout << "Usage: " << argv[0] << " obj-filename bmp-filename\n";
-		return 1;
-	}
-
-	Obj model;
-	std::string in_filename = argv[1],
-	            out_filename = argv[2];
-
-	try{
-		ObjReader().readObjFile(model, in_filename);
-	}catch(ObjReader::ObjParseException&){
-		std::cerr << "Failed to read '" << in_filename << "'.\n";
-		return 2;
-	}
-
-	// std::cout << "Processing done\n\t"
-	//           << model.numberOfVertices() << " vertices read\n\t"
-	//           << model.numberOfFaces() << " faces read\n\n";
-	
-	// const AABB &box = model.getAABB();
-	// std::cout << "AABB: [" << box.x_min << ", " << box.x_max << "]["
-	//                        << box.y_min << ", " << box.y_max << "]["
-	// 				       << box.z_min << ", " << box.z_max << "]\n";
-	
-	int w = 480, h = 360;
-
-	JiMP2::BMP bitmapxy(w, h);
-	bitmapxy.projectObjXY(model, 0xaa, 0, 0);
-	std::ofstream writerxy("xy-" + out_filename, std::ios::binary);
-	writerxy << bitmapxy;
-	writerxy.close();
-
-	JiMP2::BMP bitmapxz(w, h);
-	bitmapxz.projectObjXZ(model, 0xaa, 0, 0);
-	std::ofstream writerxz("xz-" + out_filename, std::ios::binary);
-	writerxz << bitmapxz;
-	writerxz.close();
-
-	JiMP2::BMP bitmapyz(w, h);
-	bitmapyz.projectObjYZ(model, 0xaa, 0, 0);
-	std::ofstream writeryz("yz-" + out_filename, std::ios::binary);
-	writeryz << bitmapyz;
-	writeryz.close();
-
-	return 0;
-}
