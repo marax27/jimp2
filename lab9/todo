@@ -1,0 +1,13 @@
+Set - wysłać rozwiązanie na maila, nie na UPEL
+
+Opanować make
+
+Całość deklaracji szablonów umieścić w pliku .h
+
+Kod szablonu ne zostanie skompilowany, jeśli nie wystąpi w programie jakakolwiek jego instancja.
+
+Lista może przechowywać wskaźnik current, wtedy next() czy previous() nie potrzebują żadnych argumentów. To rozwiązanie nie jest jednak dobre.
+
+Czy iterator powinien wewnętrznie skakać po node'ach (n->next), czy odwoływać się do interfejsu operowanego przez listę? Lepiej użyć #2, ale że iterator jest klasą wewnętrzną listy, #1 można wybaczyć.
+
+

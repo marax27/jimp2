@@ -67,8 +67,8 @@ void ObjReader::readObjFile(Obj &object, const std::string &fname){
 		std::size_t len = strlen(line);
 
 		// Handle CRLF format.
-		if(line[len-1] == '\r')
-			line[(len--)-1] = '\0';
+		if(line[len-2] == '\r')
+			line[(len--)-2] = '\0';
 
 		std::istringstream ss{line};
 		std::string token;

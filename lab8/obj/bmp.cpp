@@ -12,7 +12,7 @@ int negativeToZero(int x){
 	return x < 0 ? 0 : x;
 }
 
-//************************************************************
+
 
 namespace JiMP2 {
 
@@ -27,7 +27,7 @@ void BMP::projectObjXY(const Obj &object,
 	double scale_y = getHeight() / (double)(aabb.y_max - aabb.y_min);
 	double scale = std::min(scale_x, scale_y); 
 
-	// Translate a camera.
+	// Translate the camera.
 	int dx = -aabb.x_min,
 	    dy = -aabb.y_min;
 
