@@ -37,14 +37,21 @@ int main(int argc, char *argv[]){
 	          << model.numberOfVertices() << " vertices read\n\t"
 	          << model.numberOfFaces() << " faces read\n\n";
 
-	JiMP2::BMP bitmap(w, h);
-	for(uint16_t y = 0; y != h; ++y){
-		for(uint16_t x = 0; x != w; ++x){
-			unsigned char g = x / (float)w * 0xff;
-			bitmap.setPixel(x, y, g, g, g);
-		}
-	}
-	std::ofstream writer("test-bitmap.bmp", std::ios::binary);
-	writer << bitmap;
-	writer.close();
+	JiMP2::BMP bitmapxy(w, h);
+	bitmapxy.projectObjXY(model, 0xaa, 0, 0);
+	std::ofstream writerxy(std::string{"xy-"} + argv[2], std::ios::binary);
+	writerxy << bitmapxy;
+	writerxy.close();
+
+	JiMP2::BMP bitmapxz(w, h);
+	bitmapxz.projectObjXZ(model, 0, 0xaa, 0);
+	std::ofstream writerxz(std::string{"xz-"} + argv[2], std::ios::binary);
+	writerxz << bitmapxz;
+	writerxz.close();
+
+	JiMP2::BMP bitmapyz(w, h);
+	bitmapyz.projectObjYZ(model, 0, 0, 0xaa);
+	std::ofstream writeryz(std::string{"yz-"} + argv[2], std::ios::binary);
+	writeryz << bitmapyz;
+	writeryz.close();
 }
