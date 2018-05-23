@@ -8,7 +8,8 @@
 template<typename T, uint32_t _Rows, uint32_t _Columns>
 class Matrix{
 public:
-	typedef std::size_t size_type;
+	// typedef std::size_t size_type;
+	typedef uint32_t size_type;	
 
 	Matrix();
 	Matrix(Matrix &&model);
