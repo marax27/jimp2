@@ -1,5 +1,6 @@
 #include <initializer_list>
 #include <iostream>
+#include <vector>
 #include <string>
 
 using std::cout;
