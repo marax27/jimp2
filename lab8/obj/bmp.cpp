@@ -28,8 +28,8 @@ void BMP::projectObjXY(const Obj &object,
 	double scale = std::min(scale_x, scale_y); 
 
 	// Translate the camera.
-	int dx = -aabb.x_min,
-	    dy = -aabb.y_min;
+	float dx = -aabb.x_min,
+	      dy = -aabb.y_min;
 
 	// Draw each triangle.
 	for(index_t i = 0; i != object.numberOfFaces(); ++i){
@@ -69,8 +69,8 @@ void BMP::projectObjXZ(const Obj &object,
 	double scale = std::min(scale_x, scale_z); 
 
 	// Translate a camera.
-	int dx = -aabb.x_min,
-	    dz = -aabb.z_min;
+	float dx = -aabb.x_min,
+	      dz = -aabb.z_min;
 
 	// Draw each triangle.
 	for(index_t i = 0; i != object.numberOfFaces(); ++i){
@@ -111,8 +111,47 @@ void BMP::projectObjYZ(const Obj &object,
 	double scale = std::min(scale_y, scale_z); 
 
 	// Translate a camera.
-	int dy = -aabb.y_min,
-	    dz = -aabb.z_min;
+	float dy = -aabb.y_min,
+	      dz = -aabb.z_min;
+
+	// Draw each triangle.
+	for(index_t i = 0; i != object.numberOfFaces(); ++i){
+		Point3 points[3]{
+			object.getVertexOfFace(i, 0),
+			object.getVertexOfFace(i, 1),
+			object.getVertexOfFace(i, 2)
+		};
+
+		// Draw a triangle.
+		for(int i = 0; i != 3; ++i){
+			int y0 = scale*(points[i%3].getY() + dy),
+			    z0 = scale*(points[i%3].getZ() + dz),
+			    y1 = scale*(points[(i+1)%3].getY() + dy),
+			    z1 = scale*(points[(i+1)%3].getZ() + dz);
+			
+			drawLine(
+				(uint16_t)negativeToZero(y0),
+				(uint16_t)negativeToZero(z0),
+				(uint16_t)negativeToZero(y1),
+				(uint16_t)negativeToZero(z1),
+				r, g, b
+			);
+		}
+	}
+}
+/*
+void BMP::projectObjYZ(const Obj &object,
+	unsigned char r, unsigned char g, unsigned char b){
+	
+	// Adjust image scaling.
+	const AABB &aabb = object.getAABB();
+	double scale_y = getWidth() / (double)(aabb.y_max - aabb.y_min);
+	double scale_z = getHeight() / (double)(aabb.z_max - aabb.z_min);
+	double scale = std::min(scale_y, scale_z); 
+
+	// Translate a camera.
+	float dy = -aabb.y_min,
+	      dz = -aabb.z_min;
 
 	// Draw each triangle.
 	for(index_t i = 0; i != object.numberOfFaces(); ++i){
@@ -138,7 +177,7 @@ void BMP::projectObjYZ(const Obj &object,
 			);
 		}
 	}
-}
+}*/
 
 //************************************************************
 
