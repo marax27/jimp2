@@ -10,13 +10,24 @@
 // - simulation constants.
 
 #include <vector>
+#include "field.h"
+#include "pedestrian.h"
+
+namespace sim{
 
 class Snapshot{
 public:
 	std::vector<Pedestrian> pedestrians;
+	
+	std::vector<vec2> walls;
+	std::vector<vec2> exits;
+
+	Field<fp_t> dynamic_field;
 
 private:
 	;
 };
+
+}
 
 #endif  //_SNAPSHOT_H_
