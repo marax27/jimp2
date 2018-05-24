@@ -3,6 +3,7 @@
 
 #include <new>  //std::bad_alloc
 #include <cstdint>  //uint32_t
+#include <stdexcept>  //exceptions
 #include <initializer_list>
 
 template<typename T, uint32_t _Rows, uint32_t _Columns>
@@ -16,11 +17,21 @@ public:
 	Matrix(const Matrix &model);
 	Matrix(std::initializer_list<std::initializer_list<T>> list);
 
-	~Matrix();
+	~Matrix(){ free(); }
+
+	// Assignment.
 
 	Matrix& operator=(const Matrix &model){
 		free();
 		copyElements(model);
+		return *this;
+	}
+
+	Matrix& operator=(Matrix &&model){
+		free();
+		data = model.data;
+		model.data = nullptr;  //is it necessary?
+		return *this;
 	}
 
 	// Not actual matrix multiplication; instead, multiples
@@ -94,7 +105,9 @@ Matrix<T,_Rows,_Columns>::Matrix(){
 // Move constructor.
 template<typename T, uint32_t _Rows, uint32_t _Columns>
 Matrix<T,_Rows,_Columns>::Matrix(Matrix<T,_Rows,_Columns> &&model)
-	: data(model.data) {}
+	: data(model.data) {
+	model.data = nullptr;  //is it necessary?
+}
 
 // Copy constructor.
 template<typename T, uint32_t _Rows, uint32_t _Columns>
@@ -124,14 +137,6 @@ Matrix<T,_Rows,_Columns>::Matrix(
 		for(auto elem : row)
 			data[idx++] = elem;
 	}
-}
-
-//************************************************************
-
-// Destructor.
-template<typename T, uint32_t _Rows, uint32_t _Columns>
-Matrix<T,_Rows,_Columns>::~Matrix(){
-	free();
 }
 
 //************************************************************
