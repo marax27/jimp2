@@ -1,5 +1,0 @@
-sim::index_t - używany do iterowania po np. komórkach planszy.
-   (Przestarzałe) Zamiar użycia typu signed: wyliczanie stanu pola (0,5) powoduje odwołanie się m.in. do pola (-1,5).
-   Symulacja obsłuży taką sytuację i zwróci np. 0.
-   (Aktualnie) index_t jednak będzie unsigned. Ograniczy to liczbę warunków przy sprawdzaniu obecności pola w planszy,
-   czyli wystarczy x < width zamiast 0 <= x < width.
